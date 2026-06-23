@@ -1,0 +1,15 @@
+export const palette = {
+  green500: "#22c55e",
+  green600: "#16a34a",
+  green700: "#15803d",
+  green800: "#166534",
+  red500: "#dc2626",
+  red800: "#991b1b",
+  amber500: "#f59e0b",
+  blue500: "#3b82f6",
+  blue700: "#1d4ed8",
+  violet500: "#8b5cf6",
+  orange600: "#ea580c",
+  white: "#ffffff",
+  black: "#000000",
+};

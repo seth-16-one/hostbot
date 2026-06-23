@@ -1,3 +1,4 @@
+import { apiClient } from "@/services/api/client";
 import type {
   CreateDeploymentInput,
   Deployment,
@@ -5,70 +6,58 @@ import type {
   PairingSession,
 } from "@/types/deployment";
 
-const wait = (ms = 350) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const createId = (prefix: string) =>
-  `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-const createPairCode = () =>
-  Math.random().toString(36).substring(2, 10).toUpperCase();
-
 export const deploymentService = {
   async createDeployment(input: CreateDeploymentInput): Promise<Deployment> {
-    await wait();
-    const now = new Date().toISOString();
-
-    return {
-      ...input,
-      id: createId("dep"),
-      status: "queued",
-      createdAt: now,
-      updatedAt: now,
-    };
+    const response = await apiClient.post<Deployment>("/deployments", input);
+    return response.data;
   },
 
   async generateSession(deployment: Deployment): Promise<PairingSession> {
-    await wait();
-    const now = new Date();
-    const pairCode = createPairCode();
-
-    return {
-      id: createId("ses"),
-      deploymentId: deployment.id,
-      pairCode,
-      qrValue: `hostbot://pair/${deployment.id}?code=${pairCode}`,
-      expiresAt: new Date(now.getTime() + 5 * 60 * 1000).toISOString(),
-      createdAt: now.toISOString(),
-    };
+    const response = await apiClient.post<PairingSession>(
+      `/deployments/${deployment.id}/session`,
+    );
+    return response.data;
   },
 
   async pairBot(deploymentId: string): Promise<DeploymentStatus> {
-    await wait(500);
-    return deploymentId ? "deploying" : "failed";
+    const response = await apiClient.post<{ status: DeploymentStatus }>(
+      `/deployments/${deploymentId}/pair`,
+    );
+    return response.data.status;
   },
 
   async deployBot(deploymentId: string): Promise<DeploymentStatus> {
-    await wait(700);
-    return deploymentId ? "online" : "failed";
+    const response = await apiClient.post<{ status: DeploymentStatus }>(
+      `/deployments/${deploymentId}/deploy`,
+    );
+    return response.data.status;
   },
 
-  async restartBot(): Promise<DeploymentStatus> {
-    await wait();
-    return "online";
+  async restartBot(deploymentId: string): Promise<DeploymentStatus> {
+    const response = await apiClient.post<{ status: DeploymentStatus }>(
+      `/deployments/${deploymentId}/restart`,
+    );
+    return response.data.status;
   },
 
-  async stopBot(): Promise<DeploymentStatus> {
-    await wait();
-    return "offline";
+  async stopBot(deploymentId: string): Promise<DeploymentStatus> {
+    const response = await apiClient.post<{ status: DeploymentStatus }>(
+      `/deployments/${deploymentId}/stop`,
+    );
+    return response.data.status;
   },
 
-  async deleteBot(): Promise<DeploymentStatus> {
-    await wait();
-    return "suspended";
+  async deleteBot(deploymentId: string): Promise<DeploymentStatus> {
+    const response = await apiClient.delete<{ status: DeploymentStatus }>(
+      `/deployments/${deploymentId}`,
+    );
+    return response.data.status;
   },
 
-  async syncBotStatus(current: DeploymentStatus): Promise<DeploymentStatus> {
-    await wait(250);
-    return current;
+  async syncBotStatus(deploymentId: string): Promise<DeploymentStatus> {
+    const response = await apiClient.get<{ status: DeploymentStatus }>(
+      `/deployments/${deploymentId}/status`,
+    );
+    return response.data.status;
   },
 };

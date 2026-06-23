@@ -31,6 +31,12 @@ export default function MoreScreen() {
           <View style={styles.card}>
             <MenuItem
               icon="cube-outline"
+              title="Wallet"
+              onPress={() => router.push("/wallet" as any)}
+            />
+
+            <MenuItem
+              icon="pricetag-outline"
               title="Pricing & Billing"
               onPress={() => router.push("/pricing" as any)}
             />
@@ -143,7 +149,7 @@ function MenuItem({
         <Text style={styles.menuTitle}>{title}</Text>
       </View>
 
-      <Ionicons name="chevron-forward" size={20} color="COLORS.tabInactive" />
+      <Ionicons name="chevron-forward" size={20} color={COLORS.tabInactive} />
     </Pressable>
   );
 }

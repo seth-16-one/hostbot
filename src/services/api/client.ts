@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/store/auth";
 import Constants from "expo-constants";
 
 export interface ApiResponse<T> {
@@ -31,11 +32,13 @@ async function request<T>(
     throw new ApiError("API base URL is not configured", 500);
   }
 
+  const token = useAuthStore.getState().token;
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
   });

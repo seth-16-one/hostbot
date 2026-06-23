@@ -1,9 +1,11 @@
 import PageHeader from "@/components/layout/PageHeader";
 import Screen from "@/components/layout/Screen";
 import { COLORS } from "@/constants";
+import { useSettingsStore, type ThemePreference } from "@/store/settings";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useRef } from "react";
 import {
+  Animated,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,10 +15,16 @@ import {
 } from "react-native";
 
 export default function SettingsScreen() {
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [emailEnabled, setEmailEnabled] = useState(true);
-  const [botAlerts, setBotAlerts] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const {
+    pushEnabled,
+    emailEnabled,
+    botAlerts,
+    themePreference,
+    setPushEnabled,
+    setEmailEnabled,
+    setBotAlerts,
+    setThemePreference,
+  } = useSettingsStore();
 
   return (
     <Screen backgroundColor={COLORS.primary}>
@@ -31,12 +39,7 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>General</Text>
 
           <View style={styles.card}>
-            <SwitchItem
-              icon="moon-outline"
-              title="Dark Mode"
-              value={darkMode}
-              onValueChange={setDarkMode}
-            />
+            <ThemeModeToggle value={themePreference} onChange={setThemePreference} />
 
             <MenuItem
               icon="language-outline"
@@ -122,9 +125,57 @@ function MenuItem({
       <View style={styles.right}>
         {value && <Text style={styles.value}>{value}</Text>}
 
-        <Ionicons name="chevron-forward" size={18} color="COLORS.tabInactive" />
+        <Ionicons name="chevron-forward" size={18} color={COLORS.tabInactive} />
       </View>
     </Pressable>
+  );
+}
+
+function ThemeModeToggle({
+  value,
+  onChange,
+}: {
+  value: ThemePreference;
+  onChange: (value: ThemePreference) => void;
+}) {
+  const fade = useRef(new Animated.Value(1)).current;
+  const options: { value: ThemePreference; label: string; icon: any }[] = [
+    { value: "light", label: "Light", icon: "sunny-outline" },
+    { value: "dark", label: "Dark", icon: "moon-outline" },
+    { value: "system", label: "System", icon: "settings-outline" },
+  ];
+
+  const select = (next: ThemePreference) => {
+    Animated.sequence([
+      Animated.timing(fade, { toValue: 0.65, duration: 100, useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 1, duration: 140, useNativeDriver: true }),
+    ]).start();
+    onChange(next);
+  };
+
+  return (
+    <View style={styles.themeRow}>
+      {options.map((option) => {
+        const active = value === option.value;
+        return (
+          <Animated.View key={option.value} style={{ flex: 1, opacity: fade }}>
+            <Pressable
+              style={[styles.themeOption, active && styles.themeOptionActive]}
+              onPress={() => select(option.value)}
+            >
+              <Ionicons
+                name={option.icon}
+                size={20}
+                color={active ? COLORS.white : COLORS.primary}
+              />
+              <Text style={[styles.themeText, active && styles.themeTextActive]}>
+                {option.label}
+              </Text>
+            </Pressable>
+          </Animated.View>
+        );
+      })}
+    </View>
   );
 }
 
@@ -205,5 +256,30 @@ const styles = StyleSheet.create({
   value: {
     color: COLORS.muted,
     fontSize: 13,
+  },
+  themeRow: {
+    flexDirection: "row",
+    gap: 8,
+    padding: 12,
+  },
+  themeOption: {
+    alignItems: "center",
+    borderColor: COLORS.border,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 4,
+    paddingVertical: 10,
+  },
+  themeOptionActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  themeText: {
+    color: COLORS.primary,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  themeTextActive: {
+    color: COLORS.white,
   },
 });

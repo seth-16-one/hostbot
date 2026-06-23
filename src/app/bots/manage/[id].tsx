@@ -2,14 +2,40 @@ import PageHeader from "@/components/layout/PageHeader";
 import Screen from "@/components/layout/Screen";
 import { COLORS, SHADOWS } from "@/constants";
 import { deployments } from "@/data";
+import { bots } from "@/data";
+import { useDeploymentStore } from "@/store/deployment";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function ManageBotScreen() {
   const { id } = useLocalSearchParams();
-
-  const bot = deployments.find((item) => item.id === Number(id));
+  const storedDeployment = useDeploymentStore((state) =>
+    state.deployments.find((item) => item.id === String(id)),
+  );
+  const marketplaceBot = bots.marketplace.find(
+    (item) => item.id === storedDeployment?.botId,
+  );
+  const legacyBot = deployments.find((item) => item.id === Number(id));
+  const bot = storedDeployment
+    ? {
+        id: storedDeployment.id,
+        name: storedDeployment.botName,
+        icon: marketplaceBot?.icon ?? "hardware-chip-outline",
+        platform: marketplaceBot?.category ?? "WhatsApp",
+        status: storedDeployment.status === "online" ? "Online" : "Offline",
+        sessionName: storedDeployment.sessionName,
+        messages: 0,
+        users: 0,
+        groups: 0,
+        commandsUsed: 0,
+        version: marketplaceBot?.version ?? "-",
+        ownerNumber: storedDeployment.ownerNumber || "Not set",
+        uptime: storedDeployment.status === "online" ? "Just now" : "-",
+        creditsPerHour: marketplaceBot?.runCreditsPerHour ?? 0,
+        deployedAt: new Date(storedDeployment.createdAt).toLocaleDateString(),
+      }
+    : legacyBot;
 
   if (!bot) {
     return (
@@ -42,8 +68,8 @@ export default function ManageBotScreen() {
               {
                 backgroundColor:
                   bot.status === "Online"
-                    ? "COLORS.successBg"
-                    : "COLORS.dangerBg",
+                    ? COLORS.successBg
+                    : COLORS.dangerBg,
               },
             ]}
           >
@@ -54,7 +80,7 @@ export default function ManageBotScreen() {
                   color:
                     bot.status === "Online"
                       ? COLORS.successDark
-                      : "COLORS.danger",
+                      : COLORS.danger,
                 },
               ]}
             >
@@ -198,7 +224,7 @@ export default function ManageBotScreen() {
             <Ionicons
               name="refresh-circle-outline"
               size={22}
-              color="COLORS.danger"
+              color={COLORS.danger}
             />
 
             <Text style={styles.dangerText}>Clear Session</Text>
@@ -208,7 +234,7 @@ export default function ManageBotScreen() {
             style={styles.dangerItem}
             onPress={() => console.log("Delete Bot")}
           >
-            <Ionicons name="trash-outline" size={22} color="COLORS.danger" />
+            <Ionicons name="trash-outline" size={22} color={COLORS.danger} />
 
             <Text style={styles.dangerText}>Delete Bot</Text>
           </Pressable>
@@ -283,7 +309,7 @@ function MenuItem({
         </View>
       </View>
 
-      <Ionicons name="chevron-forward" size={18} color="COLORS.tabInactive" />
+      <Ionicons name="chevron-forward" size={18} color={COLORS.tabInactive} />
     </Pressable>
   );
 }
@@ -291,7 +317,7 @@ function MenuItem({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "COLORS.background",
+    backgroundColor: COLORS.background,
   },
 
   center: {
@@ -420,7 +446,7 @@ const styles = StyleSheet.create({
 
   actionCard: {
     width: "48%",
-    backgroundColor: "COLORS.card",
+    backgroundColor: COLORS.card,
     borderRadius: 20,
     paddingVertical: 22,
     paddingHorizontal: 16,
