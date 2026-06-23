@@ -23,20 +23,12 @@ export default function TicketScreen() {
   const [message, setMessage] = useState("");
 
   const submitTicket = () => {
-    const ticket = {
-      id: Date.now().toString(),
-      subject,
-      category,
-      priority,
-      botName,
-      message,
-      status: "Open",
-      createdAt: new Date().toISOString(),
-    };
-
-    console.log("Ticket Submitted:", ticket);
-
     alert("Ticket submitted successfully");
+    setSubject("");
+    setCategory("");
+    setPriority("");
+    setBotName("");
+    setMessage("");
   };
 
   return (

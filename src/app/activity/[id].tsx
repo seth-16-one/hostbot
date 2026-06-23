@@ -11,9 +11,6 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 export default function ActivityReader() {
   const { id } = useLocalSearchParams();
 
-  console.log("Route ID:", id);
-  console.log("Activities:", activities);
-
   const activity = activities.find((item) => item.id.toString() === String(id));
 
   if (!activity) {

@@ -66,15 +66,26 @@ function seedDemoUser() {
   updateDb((db) => {
     const existing = db.users.find((user) => user.email === "demo@hostbot.local");
     if (existing) {
-      existing.firstName = "Demo";
-      existing.lastName = "User";
-      existing.name = "Demo User";
-      existing.phone = "+254700000000";
-      existing.emailVerified = true;
+      let changed = false;
+      const assign = (key, value) => {
+        if (existing[key] !== value) {
+          existing[key] = value;
+          changed = true;
+        }
+      };
+
+      assign("firstName", "Demo");
+      assign("lastName", "User");
+      assign("name", "Demo User");
+      assign("phone", "+254700000000");
+      assign("emailVerified", true);
       if (!verifyPassword("password123", existing.passwordHash)) {
         existing.passwordHash = hashPassword("password123");
+        changed = true;
       }
-      existing.updatedAt = new Date().toISOString();
+      if (changed) {
+        existing.updatedAt = new Date().toISOString();
+      }
       return;
     }
     const now = new Date().toISOString();

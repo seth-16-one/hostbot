@@ -35,7 +35,7 @@ export default function EditProfileScreen() {
   const BIO_LIMIT = 250;
 
   const handleSave = () => {
-    console.log("Profile Saved");
+    alert("Profile saved");
   };
 
   return (

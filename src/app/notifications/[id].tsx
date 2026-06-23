@@ -11,9 +11,6 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 export default function NotificationReader() {
   const { id } = useLocalSearchParams();
 
-  console.log("Route ID:", id);
-  console.log("Notifications:", notifications);
-
   const notification = notifications.find(
     (item) => String(item.id) === String(id),
   );

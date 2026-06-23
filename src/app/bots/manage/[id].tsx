@@ -13,6 +13,10 @@ export default function ManageBotScreen() {
   const storedDeployment = useDeploymentStore((state) =>
     state.deployments.find((item) => item.id === String(id)),
   );
+  const restartBot = useDeploymentStore((state) => state.restartBot);
+  const stopBot = useDeploymentStore((state) => state.stopBot);
+  const deleteBot = useDeploymentStore((state) => state.deleteBot);
+  const generateSession = useDeploymentStore((state) => state.generateSession);
   const marketplaceBot = bots.marketplace.find(
     (item) => item.id === storedDeployment?.botId,
   );
@@ -44,6 +48,22 @@ export default function ManageBotScreen() {
       </View>
     );
   }
+
+  const deploymentId = storedDeployment?.id;
+  const restartDeployment = () => {
+    if (deploymentId) restartBot(deploymentId);
+  };
+  const stopDeployment = () => {
+    if (deploymentId) stopBot(deploymentId);
+  };
+  const clearSession = () => {
+    if (deploymentId) generateSession(deploymentId);
+  };
+  const removeDeployment = async () => {
+    if (!deploymentId) return;
+    await deleteBot(deploymentId);
+    router.replace("/bots" as any);
+  };
 
   return (
     <Screen backgroundColor={COLORS.primary}>
@@ -134,14 +154,14 @@ export default function ManageBotScreen() {
             icon="refresh-outline"
             title="Restart"
             description="Restart bot service"
-            onPress={() => console.log("Restart Bot")}
+            onPress={restartDeployment}
           />
 
           <ActionCard
             icon="stop-circle-outline"
             title="Stop"
             description="Stop bot instance"
-            onPress={() => router.push(`/bots/manage/session?id=${id}`)}
+            onPress={stopDeployment}
           />
 
           <ActionCard
@@ -219,7 +239,7 @@ export default function ManageBotScreen() {
         <View style={styles.dangerCard}>
           <Pressable
             style={styles.dangerItem}
-            onPress={() => console.log("Clear Session")}
+            onPress={clearSession}
           >
             <Ionicons
               name="refresh-circle-outline"
@@ -232,7 +252,7 @@ export default function ManageBotScreen() {
 
           <Pressable
             style={styles.dangerItem}
-            onPress={() => console.log("Delete Bot")}
+            onPress={removeDeployment}
           >
             <Ionicons name="trash-outline" size={22} color={COLORS.danger} />
 
@@ -343,7 +363,7 @@ const styles = StyleSheet.create({
   },
 
   statusBadge: {
-    backgroundColor: "COLORS.successBg",
+    backgroundColor: COLORS.successBg,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,

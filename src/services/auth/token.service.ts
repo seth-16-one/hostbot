@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import EncryptedStorage from "react-native-encrypted-storage";
+import { NativeModules } from "react-native";
 
 const ACCESS_TOKEN_KEY = "hostbot.accessToken";
 const REFRESH_TOKEN_KEY = "hostbot.refreshToken";
@@ -9,30 +9,63 @@ export interface TokenPair {
   refreshToken: string;
 }
 
-async function setSecureItem(key: string, value: string) {
-  try {
-    await EncryptedStorage.setItem(key, value);
-  } catch {
-    await AsyncStorage.setItem(key, value);
+type EncryptedStorageModule = {
+  setItem?: (key: string, value: string) => Promise<void>;
+  getItem?: (key: string) => Promise<string | null>;
+  removeItem?: (key: string) => Promise<void>;
+};
+
+function getEncryptedStorage(): EncryptedStorageModule | null {
+  const module = NativeModules.RNEncryptedStorage as
+    | EncryptedStorageModule
+    | undefined;
+
+  if (!module?.setItem || !module?.getItem || !module?.removeItem) {
+    return null;
   }
+
+  return module;
+}
+
+async function setSecureItem(key: string, value: string) {
+  const encryptedStorage = getEncryptedStorage();
+
+  if (encryptedStorage) {
+    try {
+      await encryptedStorage.setItem?.(key, value);
+      return;
+    } catch {
+      // Fall back to AsyncStorage below.
+    }
+  }
+
+  await AsyncStorage.setItem(key, value);
 }
 
 async function getSecureItem(key: string) {
-  try {
-    const value = await EncryptedStorage.getItem(key);
-    if (value) return value;
-  } catch {
-    // Fall back below.
+  const encryptedStorage = getEncryptedStorage();
+
+  if (encryptedStorage) {
+    try {
+      const value = await encryptedStorage.getItem?.(key);
+      if (value) return value;
+    } catch {
+      // Fall back to AsyncStorage below.
+    }
   }
 
   return AsyncStorage.getItem(key);
 }
 
 async function removeSecureItem(key: string) {
-  try {
-    await EncryptedStorage.removeItem(key);
-  } catch {
-    // Fall back below.
+  const encryptedStorage = getEncryptedStorage();
+
+  if (encryptedStorage) {
+    try {
+      await encryptedStorage.removeItem?.(key);
+    } catch {
+      // Fall back to AsyncStorage below.
+    }
   }
 
   await AsyncStorage.removeItem(key);
