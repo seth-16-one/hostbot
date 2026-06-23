@@ -9,6 +9,7 @@ export interface AuthSession {
 export const authService = {
   async register(input: {
     name: string;
+    username: string;
     email: string;
     password: string;
   }): Promise<AuthSession> {
@@ -17,7 +18,7 @@ export const authService = {
   },
 
   async login(input: {
-    email: string;
+    identifier: string;
     password: string;
   }): Promise<AuthSession> {
     const response = await apiClient.post<AuthSession>("/auth/login", input);

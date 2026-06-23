@@ -1,5 +1,15 @@
 {
-  "users": [],
+  "users": [
+    {
+      "id": "usr_1782234487065_c712ba4e",
+      "name": "Demo User",
+      "email": "demo@hostbot.local",
+      "passwordHash": "c6a2de1760a239a0d20587eff7afd48f:713086f16b9b39d43e25cf202dca42b4213d47f066aaedf53361e29cf369cfaba651a3a7d64e40fc016bfb332749548a2456551e0db924c6a5837a1dee0cfa72",
+      "createdAt": "2026-06-23T17:08:07.063Z",
+      "updatedAt": "2026-06-23T17:20:52.782Z",
+      "username": "demo"
+    }
+  ],
   "bots": [
     {
       "id": 1,
@@ -50,8 +60,16 @@
       "status": "active",
       "totalDeployments": 860,
       "lastUpdated": "2026-06-18",
-      "features": ["Auto Reply", "Commands", "Sticker Tools", "Media Downloads"],
-      "requirements": ["WhatsApp Number", "Internet Connection"],
+      "features": [
+        "Auto Reply",
+        "Commands",
+        "Sticker Tools",
+        "Media Downloads"
+      ],
+      "requirements": [
+        "WhatsApp Number",
+        "Internet Connection"
+      ],
       "deploymentConfig": {
         "minCredits": 50,
         "hourlyUsage": 3,
@@ -74,8 +92,16 @@
       "status": "active",
       "totalDeployments": 520,
       "lastUpdated": "2026-06-15",
-      "features": ["Customer Support", "Bulk Messaging", "Lead Collection", "Analytics"],
-      "requirements": ["WhatsApp Business Number", "Internet Connection"],
+      "features": [
+        "Customer Support",
+        "Bulk Messaging",
+        "Lead Collection",
+        "Analytics"
+      ],
+      "requirements": [
+        "WhatsApp Business Number",
+        "Internet Connection"
+      ],
       "deploymentConfig": {
         "minCredits": 150,
         "hourlyUsage": 8,
@@ -98,8 +124,16 @@
       "status": "maintenance",
       "totalDeployments": 310,
       "lastUpdated": "2026-06-10",
-      "features": ["Product Catalog", "Order Tracking", "Customer Support", "Payment Integration"],
-      "requirements": ["Store Setup", "Internet Connection"],
+      "features": [
+        "Product Catalog",
+        "Order Tracking",
+        "Customer Support",
+        "Payment Integration"
+      ],
+      "requirements": [
+        "Store Setup",
+        "Internet Connection"
+      ],
       "deploymentConfig": {
         "minCredits": 200,
         "hourlyUsage": 10,
@@ -108,13 +142,88 @@
       }
     }
   ],
-  "deployments": [],
-  "wallets": [],
-  "transactions": [],
-  "rechargePackages": [
-    { "id": "starter", "credits": 100, "price": 150, "currency": "KES" },
-    { "id": "growth", "credits": 500, "price": 650, "currency": "KES", "bonusCredits": 50 },
-    { "id": "scale", "credits": 1200, "price": 1400, "currency": "KES", "bonusCredits": 200 }
+  "deployments": [
+    {
+      "id": "dep_1782235119576_5f436c58",
+      "userId": "usr_1782234487065_c712ba4e",
+      "botId": 1,
+      "botName": "SethBot-MD",
+      "ownerNumber": "+254700000001",
+      "prefix": ".",
+      "sessionName": "smoke-1782235119",
+      "status": "pairing",
+      "createdAt": "2026-06-23T17:18:39.576Z",
+      "updatedAt": "2026-06-23T17:18:39.594Z",
+      "session": {
+        "id": "ses_1782235119594_25d49709",
+        "deploymentId": "dep_1782235119576_5f436c58",
+        "pairCode": "3BEE7A7B",
+        "qrValue": "hostbot://pair/dep_1782235119576_5f436c58?code=3BEE7A7B",
+        "expiresAt": "2026-06-23T17:23:39.594Z",
+        "createdAt": "2026-06-23T17:18:39.594Z"
+      }
+    }
   ],
-  "recharges": []
+  "wallets": [
+    {
+      "userId": "usr_1782234487065_c712ba4e",
+      "credits": 550,
+      "updatedAt": "2026-06-23T17:18:39.624Z"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "txn_1782235119624_b9a63690",
+      "userId": "usr_1782234487065_c712ba4e",
+      "type": "credit",
+      "status": "completed",
+      "amount": 100,
+      "description": "Wallet recharge",
+      "reference": "rch_1782235119610_8b6652f3",
+      "createdAt": "2026-06-23T17:18:39.624Z"
+    },
+    {
+      "id": "txn_1782234487382_0fecf5d5",
+      "userId": "usr_1782234487065_c712ba4e",
+      "type": "credit",
+      "status": "completed",
+      "amount": 450,
+      "description": "Demo wallet opening balance",
+      "reference": "DEMO-SEED",
+      "createdAt": "2026-06-23T17:08:07.063Z"
+    }
+  ],
+  "rechargePackages": [
+    {
+      "id": "starter",
+      "credits": 100,
+      "price": 150,
+      "currency": "KES"
+    },
+    {
+      "id": "growth",
+      "credits": 500,
+      "price": 650,
+      "currency": "KES",
+      "bonusCredits": 50
+    },
+    {
+      "id": "scale",
+      "credits": 1200,
+      "price": 1400,
+      "currency": "KES",
+      "bonusCredits": 200
+    }
+  ],
+  "recharges": [
+    {
+      "id": "rch_1782235119610_8b6652f3",
+      "userId": "usr_1782234487065_c712ba4e",
+      "status": "completed",
+      "amount": 150,
+      "credits": 100,
+      "paymentMethod": "mpesa",
+      "createdAt": "2026-06-23T17:18:39.610Z"
+    }
+  ]
 }

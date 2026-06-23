@@ -1,6 +1,6 @@
 # Host Bot Mobile App
 
-Host Bot is an Expo Router and React Native application for discovering, deploying, pairing, funding, and managing hosted WhatsApp bots. The app is structured as a backend-ready production frontend with Zustand stores, typed service boundaries, wallet flows, deployment lifecycle state, reusable UI components, and light/dark/system theme support.
+Host Bot is an Expo Router and React Native application for discovering, deploying, pairing, funding, and managing hosted WhatsApp bots. The app includes a local Express backend, a JSON sample database, authenticated API routes, Zustand stores, typed service boundaries, wallet flows, deployment lifecycle state, reusable UI components, and light/dark/system theme support.
 
 ## Table Of Contents
 
@@ -40,7 +40,7 @@ Host Bot lets users:
 - Configure app settings, notification preferences, and theme mode.
 - Access support, documentation, notifications, profile, and system status screens.
 
-The app currently uses mock services for deployment and wallet behavior. These services are intentionally shaped like backend API clients so they can be replaced by real network calls without rewriting screens.
+The app currently stores backend data in `backend/data/db.json`. That adapter is intentionally simple so it can later be replaced by a live database without changing the frontend route flow.
 
 ## Tech Stack
 
@@ -66,6 +66,26 @@ Run the development server:
 
 ```bash
 npm start
+```
+
+Run the local backend:
+
+```bash
+npm run backend
+```
+
+The backend runs at:
+
+```text
+http://localhost:3001/api
+```
+
+Demo login:
+
+```text
+Username: demo
+Email: demo@hostbot.local
+Password: password123
 ```
 
 Run on Android:
@@ -100,13 +120,15 @@ The API client reads the backend base URL from:
 EXPO_PUBLIC_API_BASE_URL=https://api.example.com
 ```
 
-If this variable is not configured, `src/services/api/client.ts` throws a clear `ApiError` when a real API request is attempted. Mock services do not require this variable.
+If this variable is not configured, `src/services/api/client.ts` falls back to the `extra.apiBaseUrl` value in `app.json`.
 
 Recommended local `.env`:
 
 ```bash
-EXPO_PUBLIC_API_BASE_URL=http://localhost:3000
+EXPO_PUBLIC_API_BASE_URL=http://localhost:3001/api
 ```
+
+The checked-in Expo config already points to `http://localhost:3001/api`.
 
 ## Project Structure
 
@@ -153,26 +175,43 @@ src/
   providers/
   services/
     api/
+    auth/
     bots/
     wallet/
   store/
   styles/
   theme/
   types/
+backend/
+  data/
+    db.json
+  src/
+    auth.js
+    database.js
+    server.js
 ```
 
 ### Important Files
 
 - `src/app/_layout.tsx`: Root layout, safe area provider, theme provider, toast provider, and Expo Router stack.
 - `src/app/(tabs)/_layout.tsx`: Main tab navigation.
-- `src/services/api/client.ts`: Backend-ready HTTP client.
-- `src/services/bots/deployment.service.ts`: Mock deployment service shaped for backend replacement.
-- `src/services/wallet/wallet.service.ts`: Mock wallet service shaped for backend replacement.
+- `src/app/(auth)/login.tsx`: Login screen with username-or-email support.
+- `src/app/(auth)/register.tsx`: Registration screen with username, email, and password.
+- `src/providers/AuthProvider.tsx`: Frontend route guard for authenticated app routes.
+- `src/services/api/client.ts`: HTTP client with bearer-token headers.
+- `src/services/auth/auth.service.ts`: Frontend auth API service.
+- `src/services/bots/bots.service.ts`: Marketplace bot API service.
+- `src/services/bots/deployment.service.ts`: Deployment API service.
+- `src/services/wallet/wallet.service.ts`: Wallet API service.
 - `src/store/deployment.ts`: Persisted deployment lifecycle state.
 - `src/store/wallet.ts`: Persisted wallet balance and transaction state.
 - `src/store/settings.ts`: Persisted settings and theme preference.
 - `src/theme/`: Light, dark, and system theme support.
 - `src/types/`: Shared TypeScript domain models.
+- `backend/data/db.json`: Sample JSON database for users, bots, wallets, deployments, and transactions.
+- `backend/src/server.js`: Express API server with authenticated routes.
+- `backend/src/auth.js`: Password hashing and signed token helpers.
+- `backend/src/database.js`: JSON database read/write adapter.
 
 ## Navigation Map
 

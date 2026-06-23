@@ -89,17 +89,17 @@ export const useDeploymentStore = create<DeploymentStore>()(
       },
 
       restartBot: async (deploymentId) => {
-        const status = await deploymentService.restartBot();
+        const status = await deploymentService.restartBot(deploymentId);
         get().updateDeployment(deploymentId, status);
       },
 
       stopBot: async (deploymentId) => {
-        const status = await deploymentService.stopBot();
+        const status = await deploymentService.stopBot(deploymentId);
         get().updateDeployment(deploymentId, status);
       },
 
       deleteBot: async (deploymentId) => {
-        const status = await deploymentService.deleteBot();
+        const status = await deploymentService.deleteBot(deploymentId);
         get().updateDeployment(deploymentId, status);
       },
 

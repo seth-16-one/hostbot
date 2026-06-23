@@ -1,11 +1,25 @@
 import PageHeader from "@/components/layout/PageHeader";
 import Screen from "@/components/layout/Screen";
 import { COLORS } from "@/constants";
+import { authService } from "@/services/auth/auth.service";
+import { useAuthStore } from "@/store/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function MoreScreen() {
+  const user = useAuthStore((state) => state.user);
+  const clearSession = useAuthStore((state) => state.clearSession);
+
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      clearSession();
+      router.replace("/login" as any);
+    }
+  };
+
   return (
     <Screen backgroundColor={COLORS.primary}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -17,6 +31,11 @@ export default function MoreScreen() {
           <Text style={styles.sectionTitle}>Profile</Text>
 
           <View style={styles.card}>
+            <View style={styles.profileSummary}>
+              <Text style={styles.profileName}>{user?.name ?? "Host Bot User"}</Text>
+              <Text style={styles.profileMeta}>@{user?.username ?? "user"} • {user?.email}</Text>
+            </View>
+
             <MenuItem
               icon="person-outline"
               title="My Profile"
@@ -121,7 +140,7 @@ export default function MoreScreen() {
 
           {/* Logout */}
 
-          <Pressable style={styles.logoutButton}>
+          <Pressable style={styles.logoutButton} onPress={logout}>
             <Ionicons name="log-out-outline" size={22} color={COLORS.danger} />
 
             <Text style={styles.logoutText}>Logout</Text>
@@ -215,5 +234,19 @@ const styles = StyleSheet.create({
     color: COLORS.danger,
     fontWeight: "700",
     fontSize: 15,
+  },
+  profileSummary: {
+    padding: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.surface,
+  },
+  profileName: {
+    color: COLORS.text,
+    fontSize: 17,
+    fontWeight: "800",
+  },
+  profileMeta: {
+    color: COLORS.muted,
+    marginTop: 4,
   },
 });

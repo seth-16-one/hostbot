@@ -20,6 +20,7 @@ function publicUser(user) {
   return {
     id: user.id,
     name: user.name,
+    username: user.username,
     email: user.email,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -60,13 +61,18 @@ function ensureWallet(db, userId) {
 
 function seedDemoUser() {
   updateDb((db) => {
-    if (db.users.some((user) => user.email === "demo@hostbot.local")) {
+    const existing = db.users.find((user) => user.email === "demo@hostbot.local");
+    if (existing) {
+      existing.username = existing.username || "demo";
+      existing.passwordHash = hashPassword("password123");
+      existing.updatedAt = new Date().toISOString();
       return;
     }
     const now = new Date().toISOString();
     const user = {
       id: id("usr"),
       name: "Demo User",
+      username: "demo",
       email: "demo@hostbot.local",
       passwordHash: hashPassword("password123"),
       createdAt: now,
@@ -92,21 +98,30 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.post("/api/auth/register", (req, res) => {
-  const { name, email, password } = req.body || {};
-  if (!name || !email || !password || password.length < 8) {
-    return res.status(400).json({ message: "Name, email, and an 8+ character password are required" });
+  const { name, username, email, password } = req.body || {};
+  if (!name || !username || !email || !password || password.length < 8) {
+    return res.status(400).json({ message: "Name, username, email, and an 8+ character password are required" });
   }
 
   const normalizedEmail = String(email).trim().toLowerCase();
+  const normalizedUsername = String(username).trim().toLowerCase();
+  if (!/^[a-z0-9_]{3,24}$/.test(normalizedUsername)) {
+    return res.status(400).json({ message: "Username must be 3-24 characters using letters, numbers, or underscores" });
+  }
+
   const result = updateDb((db) => {
     if (db.users.some((user) => user.email === normalizedEmail)) {
       return { error: "Email is already registered" };
+    }
+    if (db.users.some((user) => user.username === normalizedUsername)) {
+      return { error: "Username is already taken" };
     }
 
     const now = new Date().toISOString();
     const user = {
       id: id("usr"),
       name: String(name).trim(),
+      username: normalizedUsername,
       email: normalizedEmail,
       passwordHash: hashPassword(password),
       createdAt: now,
@@ -125,13 +140,15 @@ app.post("/api/auth/register", (req, res) => {
 });
 
 app.post("/api/auth/login", (req, res) => {
-  const { email, password } = req.body || {};
-  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const { identifier, email, username, password } = req.body || {};
+  const loginId = String(identifier || email || username || "").trim().toLowerCase();
   const db = readDb();
-  const user = db.users.find((item) => item.email === normalizedEmail);
+  const user = db.users.find(
+    (item) => item.email === loginId || item.username === loginId,
+  );
 
   if (!user || !verifyPassword(password, user.passwordHash)) {
-    return res.status(401).json({ message: "Invalid email or password" });
+    return res.status(401).json({ message: "Invalid username/email or password" });
   }
 
   res.json({ user: publicUser(user), token: createToken(user) });

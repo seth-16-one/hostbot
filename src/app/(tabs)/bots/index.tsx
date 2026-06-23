@@ -5,10 +5,12 @@ import PageHeader from "@/components/layout/PageHeader";
 import Screen from "@/components/layout/Screen";
 import { EmptyState } from "@/components/ui";
 import { COLORS } from "@/constants";
-import { bots } from "@/data";
+import { bots as staticBots } from "@/data";
+import { botsService } from "@/services/bots/bots.service";
 import { useDeploymentStore } from "@/store/deployments";
+import type { MarketplaceBot } from "@/types/bot";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -18,37 +20,36 @@ import {
   View,
 } from "react-native";
 
-const availableBots = bots.marketplace;
-
-const deployedBots = useDeploymentStore((state) => state.deployments);
-
 const categories = ["All", "WhatsApp", "Business", "E-commerce"];
 
 export default function BotsScreen() {
+  const deployedBots = useDeploymentStore((state) => state.deployments);
+  const [availableBots, setAvailableBots] = useState<MarketplaceBot[]>(
+    staticBots.marketplace,
+  );
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  const loadBots = async () => {
+    const marketplace = await botsService.getMarketplace();
+    setAvailableBots(marketplace);
+  };
+
+  useEffect(() => {
+    loadBots().catch(() => setAvailableBots(staticBots.marketplace));
+  }, []);
 
   const onRefresh = async () => {
     try {
       setRefreshing(true);
-
-      // await fetchMarketplaceBots();
-      // await fetchMyBots();
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await loadBots();
     } finally {
       setRefreshing(false);
     }
   };
 
-  const onlineBots = deployedBots.filter(
-    (bot) => bot.status === "online",
-  ).length;
-
-  const offlineBots = deployedBots.filter(
-    (bot) => bot.status !== "online",
-  ).length;
-
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const onlineBots = deployedBots.filter((bot) => bot.status === "online").length;
+  const offlineBots = deployedBots.filter((bot) => bot.status !== "online").length;
   const filteredBots =
     selectedCategory === "All"
       ? availableBots
@@ -59,9 +60,7 @@ export default function BotsScreen() {
       <ScrollView
         style={styles.container}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <PageHeader
           title="Bots"
@@ -73,11 +72,8 @@ export default function BotsScreen() {
         <View style={styles.content}>
           <CreditsCard credits={450} />
 
-          {/* My Bots */}
-
           <View style={styles.headerRow}>
             <Text style={styles.sectionTitle}>My Bots</Text>
-
             <Text style={styles.summaryText}>
               {onlineBots} Online • {offlineBots} Offline
             </Text>
@@ -91,10 +87,7 @@ export default function BotsScreen() {
             />
           ) : (
             deployedBots.map((deployment) => {
-              const botInfo = availableBots.find(
-                (bot) => bot.id === deployment.botId,
-              );
-
+              const botInfo = availableBots.find((bot) => bot.id === deployment.botId);
               if (!botInfo) return null;
 
               return (
@@ -106,22 +99,15 @@ export default function BotsScreen() {
                   platform={botInfo.category}
                   status={deployment.status}
                   messages="0"
-                  onPress={() =>
-                    router.push(`/bots/manage/${deployment.id}` as any)
-                  }
+                  onPress={() => router.push(`/bots/manage/${deployment.id}` as any)}
                 />
               );
             })
           )}
 
-          {/* Marketplace */}
-
           <View style={styles.headerRow}>
             <Text style={styles.sectionTitle}>Marketplace</Text>
-
-            <Text style={styles.summaryText}>
-              {availableBots.length} Available
-            </Text>
+            <Text style={styles.summaryText}>{availableBots.length} Available</Text>
           </View>
 
           <ScrollView
@@ -180,17 +166,8 @@ export default function BotsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
-  },
-
+  container: { flex: 1, backgroundColor: COLORS.background },
+  content: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -198,25 +175,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 12,
   },
-
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
-
-  summaryText: {
-    color: COLORS.muted,
-    fontSize: 13,
-  },
-
+  sectionTitle: { fontSize: 18, fontWeight: "700", color: COLORS.text },
+  summaryText: { color: COLORS.muted, fontSize: 13 },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     marginTop: 12,
   },
-
   categories: {
     flexDirection: "row",
     alignItems: "center",
@@ -224,7 +190,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingRight: 20,
   },
-
   category: {
     backgroundColor: COLORS.white,
     paddingHorizontal: 14,
@@ -232,18 +197,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     marginRight: 10,
   },
-
-  activeCategory: {
-    backgroundColor: COLORS.primary,
-  },
-
-  categoryText: {
-    color: COLORS.text,
-    fontWeight: "600",
-  },
-
-  activeCategoryText: {
-    color: COLORS.white,
-    fontWeight: "600",
-  },
+  activeCategory: { backgroundColor: COLORS.primary },
+  categoryText: { color: COLORS.text, fontWeight: "600" },
+  activeCategoryText: { color: COLORS.white, fontWeight: "600" },
 });
