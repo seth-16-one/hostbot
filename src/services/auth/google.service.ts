@@ -4,7 +4,6 @@ import {
   GOOGLE_WEB_CLIENT_ID,
 } from "@/config/env";
 import { authService } from "@/services/auth/auth.service";
-import * as AuthSession from "expo-auth-session";
 
 export const googleService = {
   isAvailable() {
@@ -16,6 +15,15 @@ export const googleService = {
   async login() {
     if (!this.isAvailable()) {
       throw new Error("Google login is not configured");
+    }
+
+    let AuthSession: typeof import("expo-auth-session");
+    try {
+      AuthSession = await import("expo-auth-session");
+    } catch {
+      throw new Error(
+        "Google login is unavailable in this build. Install the required Expo auth modules and rebuild the app.",
+      );
     }
 
     const discovery = {

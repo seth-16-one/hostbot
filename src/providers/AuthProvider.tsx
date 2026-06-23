@@ -7,6 +7,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const rootNavigationState = useRootNavigationState();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const hasCheckedSession = useAuthStore((state) => state.hasCheckedSession);
   const loadSession = useAuthStore((state) => state.loadSession);
   const loaded = useRef(false);
 
@@ -18,7 +19,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   }, [loadSession]);
 
   useEffect(() => {
-    if (!rootNavigationState?.key || isLoading) return;
+    if (!rootNavigationState?.key || !hasCheckedSession || isLoading) return;
 
     const inAuthGroup = segments[0] === "(auth)";
 
@@ -28,11 +29,17 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }
 
     if (isAuthenticated && inAuthGroup) {
-      router.replace("/dashboard" as any);
+      router.replace("/(tabs)/dashboard" as any);
     }
-  }, [isAuthenticated, isLoading, rootNavigationState?.key, segments]);
+  }, [
+    hasCheckedSession,
+    isAuthenticated,
+    isLoading,
+    rootNavigationState?.key,
+    segments,
+  ]);
 
-  if (isLoading) {
+  if (!hasCheckedSession) {
     return null;
   }
 

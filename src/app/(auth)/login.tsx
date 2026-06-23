@@ -45,7 +45,6 @@ export default function LoginScreen() {
     setError(null);
     try {
       await loginWithPassword({ email: email.trim().toLowerCase(), password });
-      router.replace("/dashboard" as any);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -56,7 +55,6 @@ export default function LoginScreen() {
     try {
       const session = await googleService.login();
       await setGoogleSession(session);
-      router.replace("/dashboard" as any);
     } catch (err) {
       setError((err as Error).message);
     }

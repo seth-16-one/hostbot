@@ -60,7 +60,6 @@ export default function RegisterScreen() {
         phone: phone.trim(),
         password,
       });
-      router.replace("/dashboard" as any);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -71,7 +70,6 @@ export default function RegisterScreen() {
     try {
       const session = await googleService.login();
       await setGoogleSession(session);
-      router.replace("/dashboard" as any);
     } catch (err) {
       setError((err as Error).message);
     }

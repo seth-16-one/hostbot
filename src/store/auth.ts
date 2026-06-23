@@ -21,6 +21,7 @@ interface AuthStore {
   refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  hasCheckedSession: boolean;
   error: string | null;
   login: (input: { email: string; password: string }) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
@@ -45,7 +46,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   accessToken: null,
   refreshToken: null,
   isAuthenticated: false,
-  isLoading: true,
+  isLoading: false,
+  hasCheckedSession: false,
   error: null,
 
   setSession: async (user, accessToken, refreshToken) => {
@@ -56,6 +58,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       refreshToken,
       isAuthenticated: true,
       isLoading: false,
+      hasCheckedSession: true,
       error: null,
     });
   },
@@ -68,6 +71,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
+      hasCheckedSession: true,
       error: null,
     });
   },
@@ -82,7 +86,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         session.refreshToken,
       );
     } catch (error) {
-      set({ isLoading: false, error: (error as Error).message });
+      set({
+        isLoading: false,
+        hasCheckedSession: true,
+        error: (error as Error).message,
+      });
       throw error;
     }
   },
@@ -97,7 +105,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         session.refreshToken,
       );
     } catch (error) {
-      set({ isLoading: false, error: (error as Error).message });
+      set({
+        isLoading: false,
+        hasCheckedSession: true,
+        error: (error as Error).message,
+      });
       throw error;
     }
   },
@@ -157,6 +169,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         refreshToken,
         isAuthenticated: true,
         isLoading: false,
+        hasCheckedSession: true,
+        error: null,
       });
     } catch {
       try {
