@@ -1,31 +1,38 @@
 import { useAuthStore } from "@/store/auth";
 import { router, useRootNavigationState, useSegments } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const segments = useSegments();
   const rootNavigationState = useRootNavigationState();
-  const token = useAuthStore((state) => state.token);
-  const hydrated = useAuthStore((state) => state.hydrated);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const loadSession = useAuthStore((state) => state.loadSession);
+  const loaded = useRef(false);
 
   useEffect(() => {
-    if (!rootNavigationState?.key || !hydrated) {
-      return;
+    if (!loaded.current) {
+      loaded.current = true;
+      loadSession();
     }
+  }, [loadSession]);
+
+  useEffect(() => {
+    if (!rootNavigationState?.key || isLoading) return;
 
     const inAuthGroup = segments[0] === "(auth)";
 
-    if (!token && !inAuthGroup) {
+    if (!isAuthenticated && !inAuthGroup) {
       router.replace("/login" as any);
       return;
     }
 
-    if (token && inAuthGroup) {
+    if (isAuthenticated && inAuthGroup) {
       router.replace("/dashboard" as any);
     }
-  }, [hydrated, rootNavigationState?.key, segments, token]);
+  }, [isAuthenticated, isLoading, rootNavigationState?.key, segments]);
 
-  if (!hydrated) {
+  if (isLoading) {
     return null;
   }
 

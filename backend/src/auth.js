@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 
-const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
+const ACCESS_TOKEN_TTL_SECONDS = 60 * 15;
+const REFRESH_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30;
 
 function base64Url(input) {
   return Buffer.from(input).toString("base64url");
@@ -13,14 +14,24 @@ function sign(value) {
     .digest("base64url");
 }
 
-function createToken(user) {
+function createToken(user, type = "access") {
   const payload = {
     sub: user.id,
     email: user.email,
-    exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
+    type,
+    exp:
+      Math.floor(Date.now() / 1000) +
+      (type === "refresh" ? REFRESH_TOKEN_TTL_SECONDS : ACCESS_TOKEN_TTL_SECONDS),
   };
   const encoded = base64Url(JSON.stringify(payload));
   return `${encoded}.${sign(encoded)}`;
+}
+
+function createTokenPair(user) {
+  return {
+    accessToken: createToken(user, "access"),
+    refreshToken: createToken(user, "refresh"),
+  };
 }
 
 function verifyToken(token) {
@@ -49,4 +60,10 @@ function verifyPassword(password, storedHash) {
   return hashPassword(password, salt) === storedHash;
 }
 
-module.exports = { createToken, hashPassword, verifyPassword, verifyToken };
+module.exports = {
+  createToken,
+  createTokenPair,
+  hashPassword,
+  verifyPassword,
+  verifyToken,
+};

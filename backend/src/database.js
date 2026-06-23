@@ -4,7 +4,7 @@ const path = require("path");
 const dbPath = path.join(__dirname, "..", "data", "db.json");
 
 function readDb() {
-  return JSON.parse(fs.readFileSync(dbPath, "utf8"));
+  return JSON.parse(fs.readFileSync(dbPath, "utf8").replace(/^\uFEFF/, ""));
 }
 
 function writeDb(db) {

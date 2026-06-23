@@ -1,6 +1,6 @@
 import { Button, Input, StatusBanner } from "@/components/ui";
 import { COLORS } from "@/constants";
-import { authService } from "@/services/auth/auth.service";
+import { googleService } from "@/services/auth/google.service";
 import { useAuthStore } from "@/store/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -15,31 +15,65 @@ import {
   View,
 } from "react-native";
 
-export default function RegisterScreen() {
-  const setSession = useAuthStore((state) => state.setSession);
-  const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const strongPasswordPattern =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-  const register = async () => {
-    setLoading(true);
+export default function RegisterScreen() {
+  const register = useAuthStore((state) => state.register);
+  const setGoogleSession = useAuthStore((state) => state.googleLogin);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const googleAvailable = googleService.isAvailable();
+
+  const validate = () => {
+    if (!firstName.trim() || !lastName.trim()) return "First and last name are required.";
+    if (!email.trim() || !emailPattern.test(email.trim())) return "Enter a valid email address.";
+    if (!phone.trim()) return "Phone number is required.";
+    if (!strongPasswordPattern.test(password)) {
+      return "Password must have 8+ characters, an uppercase letter, a lowercase letter, and a number.";
+    }
+    if (password !== confirmPassword) return "Passwords do not match.";
+    return null;
+  };
+
+  const submit = async () => {
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setError(null);
     try {
-      const session = await authService.register({
-        name,
-        username,
-        email,
+      await register({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
         password,
       });
-      setSession(session.user, session.token);
       router.replace("/dashboard" as any);
     } catch (err) {
       setError((err as Error).message);
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const signupWithGoogle = async () => {
+    setError(null);
+    try {
+      const session = await googleService.login();
+      await setGoogleSession(session);
+      router.replace("/dashboard" as any);
+    } catch (err) {
+      setError((err as Error).message);
     }
   };
 
@@ -52,23 +86,20 @@ export default function RegisterScreen() {
         <View style={styles.brandMark}>
           <Ionicons name="person-add-outline" size={32} color={COLORS.white} />
         </View>
-
         <Text style={styles.brand}>Create Account</Text>
-        <Text style={styles.subtitle}>Your wallet and deployments will be saved to your session.</Text>
+        <Text style={styles.subtitle}>Your wallet and deployments stay tied to your secure session.</Text>
 
-        {error ? (
-          <StatusBanner type="error" title="Registration failed" message={error} />
-        ) : null}
+        {error ? <StatusBanner type="error" title="Registration failed" message={error} /> : null}
 
         <View style={styles.card}>
-          <Input label="Name" value={name} onChangeText={setName} placeholder="Your name" />
-          <Input
-            autoCapitalize="none"
-            label="Username"
-            value={username}
-            onChangeText={setUsername}
-            placeholder="letters, numbers, underscores"
-          />
+          <View style={styles.nameRow}>
+            <View style={styles.nameField}>
+              <Input label="First Name" value={firstName} onChangeText={setFirstName} placeholder="Jane" />
+            </View>
+            <View style={styles.nameField}>
+              <Input label="Last Name" value={lastName} onChangeText={setLastName} placeholder="Doe" />
+            </View>
+          </View>
           <Input
             autoCapitalize="none"
             keyboardType="email-address"
@@ -78,13 +109,45 @@ export default function RegisterScreen() {
             placeholder="you@example.com"
           />
           <Input
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Minimum 8 characters"
-            secureTextEntry
+            keyboardType="phone-pad"
+            label="Phone"
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="+254700000000"
           />
-          <Button title="Create Account" onPress={register} loading={loading} />
+          <View>
+            <Input
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Strong password"
+              secureTextEntry={!showPassword}
+            />
+            <Pressable style={styles.eyeButton} onPress={() => setShowPassword((value) => !value)}>
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color={COLORS.muted}
+              />
+            </Pressable>
+          </View>
+          <Input
+            label="Confirm Password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            placeholder="Repeat password"
+            secureTextEntry={!showPassword}
+          />
+
+          <Button title="Create Account" onPress={submit} loading={isLoading} />
+
+          {googleAvailable ? (
+            <Pressable style={styles.googleButton} onPress={signupWithGoogle}>
+              <Ionicons name="logo-google" size={20} color={COLORS.text} />
+              <Text style={styles.googleText}>Sign up with Google</Text>
+            </Pressable>
+          ) : null}
+
           <Pressable onPress={() => router.push("/login" as any)} style={styles.linkButton}>
             <Text style={styles.linkText}>I already have an account</Text>
           </Pressable>
@@ -96,11 +159,7 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.background },
-  content: {
-    flexGrow: 1,
-    justifyContent: "center",
-    padding: 20,
-  },
+  content: { flexGrow: 1, justifyContent: "center", padding: 20 },
   brandMark: {
     alignItems: "center",
     alignSelf: "center",
@@ -127,6 +186,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 18,
   },
+  nameRow: { flexDirection: "row", gap: 10 },
+  nameField: { flex: 1 },
+  eyeButton: { position: "absolute", right: 12, top: 39, padding: 8 },
+  googleButton: {
+    alignItems: "center",
+    borderColor: COLORS.border,
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "center",
+    marginHorizontal: 20,
+    marginTop: 8,
+    paddingVertical: 15,
+  },
+  googleText: { color: COLORS.text, fontWeight: "700" },
   linkButton: { alignItems: "center", paddingVertical: 16 },
   linkText: { color: COLORS.primary, fontWeight: "700" },
 });

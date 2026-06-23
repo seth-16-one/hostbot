@@ -1,5 +1,5 @@
-import { useAuthStore } from "@/store/auth";
-import Constants from "expo-constants";
+import { REQUEST_RETRIES, REQUEST_TIMEOUT_MS, requireApiUrl } from "@/config/env";
+import { tokenService } from "@/services/auth/token.service";
 
 export interface ApiResponse<T> {
   data: T;
@@ -7,62 +7,170 @@ export interface ApiResponse<T> {
   status: number;
 }
 
+type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+interface RequestOptions {
+  auth?: boolean;
+  retry?: boolean;
+  timeoutMs?: number;
+}
+
 export class ApiError extends Error {
   status: number;
   payload?: unknown;
+  code:
+    | "NETWORK_ERROR"
+    | "TIMEOUT"
+    | "UNAUTHORIZED"
+    | "SERVER_ERROR"
+    | "VALIDATION_ERROR";
 
-  constructor(message: string, status: number, payload?: unknown) {
+  constructor(
+    message: string,
+    status: number,
+    code: ApiError["code"] = "SERVER_ERROR",
+    payload?: unknown,
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.code = code;
     this.payload = payload;
   }
 }
 
-const extra = Constants.expoConfig?.extra as { apiBaseUrl?: string } | undefined;
-const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ?? extra?.apiBaseUrl ?? "";
+function getFriendlyMessage(status: number, payload: any) {
+  if (payload?.message) return payload.message;
+  if (status === 0) return "Unable to connect. Check your internet connection.";
+  if (status === 401) return "Your session has expired. Please sign in again.";
+  if (status === 408) return "The request timed out. Please try again.";
+  if (status >= 500) return "The server is unavailable. Please try again later.";
+  return "Request failed. Please try again.";
+}
 
-async function request<T>(
-  method: "GET" | "POST" | "PUT" | "DELETE",
+async function parseResponse(response: Response) {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    return response.json().catch(() => undefined);
+  }
+
+  const text = await response.text().catch(() => "");
+  return text ? { message: text } : undefined;
+}
+
+async function refreshAccessToken() {
+  const refreshToken = await tokenService.getRefreshToken();
+  if (!refreshToken) return null;
+
+  const response = await rawRequest<{
+    accessToken: string;
+    refreshToken: string;
+  }>("POST", "/auth/refresh", { refreshToken }, { auth: false, retry: false });
+
+  await tokenService.saveTokens(response.data);
+  return response.data.accessToken;
+}
+
+async function rawRequest<T>(
+  method: HttpMethod,
   path: string,
   body?: unknown,
+  options: RequestOptions = {},
 ): Promise<ApiResponse<T>> {
-  if (!API_BASE_URL) {
-    throw new ApiError("API base URL is not configured", 500);
-  }
+  const baseUrl = requireApiUrl();
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    options.timeoutMs ?? REQUEST_TIMEOUT_MS,
+  );
 
-  const token = useAuthStore.getState().token;
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  try {
+    const accessToken =
+      options.auth === false ? null : await tokenService.getAccessToken();
+    const response = await fetch(`${baseUrl}${path}`, {
+      method,
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
 
-  const payload = await response.json().catch(() => undefined);
+    const payload = await parseResponse(response);
 
-  if (!response.ok) {
+    if (!response.ok) {
+      throw new ApiError(
+        getFriendlyMessage(response.status, payload),
+        response.status,
+        response.status === 401 ? "UNAUTHORIZED" : "SERVER_ERROR",
+        payload,
+      );
+    }
+
+    return {
+      data: payload as T,
+      message: payload?.message,
+      status: response.status,
+    };
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    const isTimeout = (error as Error).name === "AbortError";
     throw new ApiError(
-      payload?.message ?? "Request failed",
-      response.status,
-      payload,
+      isTimeout
+        ? "The request timed out. Please try again."
+        : "Unable to connect. Check your internet connection.",
+      isTimeout ? 408 : 0,
+      isTimeout ? "TIMEOUT" : "NETWORK_ERROR",
     );
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function request<T>(
+  method: HttpMethod,
+  path: string,
+  body?: unknown,
+  options: RequestOptions = {},
+): Promise<ApiResponse<T>> {
+  const attempts = options.retry === false ? 0 : REQUEST_RETRIES;
+
+  for (let attempt = 0; attempt <= attempts; attempt += 1) {
+    try {
+      return await rawRequest<T>(method, path, body, options);
+    } catch (error) {
+      const apiError = error as ApiError;
+
+      if (apiError.status === 401 && options.auth !== false && attempt === 0) {
+        const refreshed = await refreshAccessToken().catch(() => null);
+        if (refreshed) continue;
+      }
+
+      if (
+        attempt < attempts &&
+        (apiError.code === "NETWORK_ERROR" || apiError.code === "TIMEOUT")
+      ) {
+        continue;
+      }
+
+      throw apiError;
+    }
   }
 
-  return {
-    data: payload as T,
-    message: payload?.message,
-    status: response.status,
-  };
+  throw new ApiError("Request failed. Please try again.", 0);
 }
 
 export const apiClient = {
-  get: <T>(path: string) => request<T>("GET", path),
-  post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),
-  put: <T>(path: string, body?: unknown) => request<T>("PUT", path, body),
-  delete: <T>(path: string) => request<T>("DELETE", path),
+  get: <T>(path: string, options?: RequestOptions) =>
+    request<T>("GET", path, undefined, options),
+  post: <T>(path: string, body?: unknown, options?: RequestOptions) =>
+    request<T>("POST", path, body, options),
+  put: <T>(path: string, body?: unknown, options?: RequestOptions) =>
+    request<T>("PUT", path, body, options),
+  patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>
+    request<T>("PATCH", path, body, options),
+  delete: <T>(path: string, options?: RequestOptions) =>
+    request<T>("DELETE", path, undefined, options),
 };

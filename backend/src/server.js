@@ -3,7 +3,7 @@ require("dotenv").config();
 const crypto = require("crypto");
 const cors = require("cors");
 const express = require("express");
-const { createToken, hashPassword, verifyPassword, verifyToken } = require("./auth");
+const { createTokenPair, hashPassword, verifyPassword, verifyToken } = require("./auth");
 const { readDb, updateDb } = require("./database");
 
 const app = express();
@@ -20,8 +20,11 @@ function publicUser(user) {
   return {
     id: user.id,
     name: user.name,
-    username: user.username,
+    firstName: user.firstName || user.name?.split(" ")[0] || "",
+    lastName: user.lastName || user.name?.split(" ").slice(1).join(" ") || "",
     email: user.email,
+    phone: user.phone || "",
+    emailVerified: Boolean(user.emailVerified),
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -32,7 +35,7 @@ function requireAuth(req, res, next) {
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
   const payload = verifyToken(token);
 
-  if (!payload) {
+  if (!payload || payload.type !== "access") {
     return res.status(401).json({ message: "Authentication required" });
   }
 
@@ -63,17 +66,26 @@ function seedDemoUser() {
   updateDb((db) => {
     const existing = db.users.find((user) => user.email === "demo@hostbot.local");
     if (existing) {
-      existing.username = existing.username || "demo";
-      existing.passwordHash = hashPassword("password123");
+      existing.firstName = "Demo";
+      existing.lastName = "User";
+      existing.name = "Demo User";
+      existing.phone = "+254700000000";
+      existing.emailVerified = true;
+      if (!verifyPassword("password123", existing.passwordHash)) {
+        existing.passwordHash = hashPassword("password123");
+      }
       existing.updatedAt = new Date().toISOString();
       return;
     }
     const now = new Date().toISOString();
     const user = {
       id: id("usr"),
+      firstName: "Demo",
+      lastName: "User",
       name: "Demo User",
-      username: "demo",
       email: "demo@hostbot.local",
+      phone: "+254700000000",
+      emailVerified: true,
       passwordHash: hashPassword("password123"),
       createdAt: now,
       updatedAt: now,
@@ -97,32 +109,39 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", service: "hostbot-backend" });
 });
 
+function createEmailToken() {
+  return crypto.randomBytes(24).toString("hex");
+}
+
+function sendAuthSession(res, user, status = 200) {
+  res.status(status).json({
+    user: publicUser(user),
+    ...createTokenPair(user),
+  });
+}
+
 app.post("/api/auth/register", (req, res) => {
-  const { name, username, email, password } = req.body || {};
-  if (!name || !username || !email || !password || password.length < 8) {
-    return res.status(400).json({ message: "Name, username, email, and an 8+ character password are required" });
+  const { firstName, lastName, email, phone, password } = req.body || {};
+  if (!firstName || !lastName || !email || !phone || !password || password.length < 8) {
+    return res.status(400).json({ message: "First name, last name, email, phone, and an 8+ character password are required" });
   }
 
   const normalizedEmail = String(email).trim().toLowerCase();
-  const normalizedUsername = String(username).trim().toLowerCase();
-  if (!/^[a-z0-9_]{3,24}$/.test(normalizedUsername)) {
-    return res.status(400).json({ message: "Username must be 3-24 characters using letters, numbers, or underscores" });
-  }
-
   const result = updateDb((db) => {
     if (db.users.some((user) => user.email === normalizedEmail)) {
       return { error: "Email is already registered" };
-    }
-    if (db.users.some((user) => user.username === normalizedUsername)) {
-      return { error: "Username is already taken" };
     }
 
     const now = new Date().toISOString();
     const user = {
       id: id("usr"),
-      name: String(name).trim(),
-      username: normalizedUsername,
+      firstName: String(firstName).trim(),
+      lastName: String(lastName).trim(),
+      name: `${String(firstName).trim()} ${String(lastName).trim()}`,
       email: normalizedEmail,
+      phone: String(phone).trim(),
+      emailVerified: false,
+      emailVerificationToken: createEmailToken(),
       passwordHash: hashPassword(password),
       createdAt: now,
       updatedAt: now,
@@ -136,25 +155,137 @@ app.post("/api/auth/register", (req, res) => {
     return res.status(409).json({ message: result.error });
   }
 
-  res.status(201).json({ user: publicUser(result.user), token: createToken(result.user) });
+  sendAuthSession(res, result.user, 201);
 });
 
 app.post("/api/auth/login", (req, res) => {
-  const { identifier, email, username, password } = req.body || {};
-  const loginId = String(identifier || email || username || "").trim().toLowerCase();
+  const { email, password } = req.body || {};
+  const loginId = String(email || "").trim().toLowerCase();
   const db = readDb();
-  const user = db.users.find(
-    (item) => item.email === loginId || item.username === loginId,
-  );
+  const user = db.users.find((item) => item.email === loginId);
 
   if (!user || !verifyPassword(password, user.passwordHash)) {
-    return res.status(401).json({ message: "Invalid username/email or password" });
+    return res.status(401).json({ message: "Invalid email or password" });
   }
 
-  res.json({ user: publicUser(user), token: createToken(user) });
+  sendAuthSession(res, user);
 });
 
 app.post("/api/auth/logout", requireAuth, (_req, res) => {
+  res.json({ success: true });
+});
+
+app.post("/api/auth/refresh", (req, res) => {
+  const { refreshToken } = req.body || {};
+  const payload = verifyToken(refreshToken);
+  if (!payload || payload.type !== "refresh") {
+    return res.status(401).json({ message: "Invalid refresh token" });
+  }
+
+  const user = readDb().users.find((item) => item.id === payload.sub);
+  if (!user) {
+    return res.status(401).json({ message: "User session is no longer valid" });
+  }
+
+  sendAuthSession(res, user);
+});
+
+app.post("/api/auth/google", (req, res) => {
+  const { idToken } = req.body || {};
+  if (!idToken) {
+    return res.status(400).json({ message: "Google ID token is required" });
+  }
+
+  const result = updateDb((db) => {
+    const now = new Date().toISOString();
+    const email = `google-${crypto.createHash("sha1").update(idToken).digest("hex").slice(0, 10)}@google.local`;
+    let user = db.users.find((item) => item.email === email);
+    if (!user) {
+      user = {
+        id: id("usr"),
+        firstName: "Google",
+        lastName: "User",
+        name: "Google User",
+        email,
+        phone: "",
+        emailVerified: true,
+        provider: "google",
+        passwordHash: "",
+        createdAt: now,
+        updatedAt: now,
+      };
+      db.users.push(user);
+      ensureWallet(db, user.id);
+    }
+    return user;
+  });
+
+  sendAuthSession(res, result);
+});
+
+app.post("/api/auth/forgot-password", (req, res) => {
+  const { email } = req.body || {};
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  updateDb((db) => {
+    const user = db.users.find((item) => item.email === normalizedEmail);
+    if (user) {
+      user.resetPasswordToken = createEmailToken();
+      user.resetPasswordExpiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      user.updatedAt = new Date().toISOString();
+    }
+  });
+  res.json({ success: true });
+});
+
+app.post("/api/auth/reset-password", (req, res) => {
+  const { token, password } = req.body || {};
+  if (!token || !password || password.length < 8) {
+    return res.status(400).json({ message: "Valid token and password are required" });
+  }
+
+  const result = updateDb((db) => {
+    const user = db.users.find(
+      (item) =>
+        item.resetPasswordToken === token &&
+        item.resetPasswordExpiresAt &&
+        new Date(item.resetPasswordExpiresAt).getTime() > Date.now(),
+    );
+    if (!user) return { error: "Reset token is invalid or expired" };
+    user.passwordHash = hashPassword(password);
+    delete user.resetPasswordToken;
+    delete user.resetPasswordExpiresAt;
+    user.updatedAt = new Date().toISOString();
+    return { user };
+  });
+
+  if (result.error) return res.status(400).json({ message: result.error });
+  res.json({ success: true });
+});
+
+app.post("/api/auth/verify-email", (req, res) => {
+  const { token } = req.body || {};
+  const result = updateDb((db) => {
+    const user = db.users.find((item) => item.emailVerificationToken === token);
+    if (!user) return { error: "Verification token is invalid" };
+    user.emailVerified = true;
+    delete user.emailVerificationToken;
+    user.updatedAt = new Date().toISOString();
+    return { user };
+  });
+  if (result.error) return res.status(400).json({ message: result.error });
+  res.json({ success: true });
+});
+
+app.post("/api/auth/resend-verification", (req, res) => {
+  const { email } = req.body || {};
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  updateDb((db) => {
+    const user = db.users.find((item) => item.email === normalizedEmail);
+    if (user && !user.emailVerified) {
+      user.emailVerificationToken = createEmailToken();
+      user.updatedAt = new Date().toISOString();
+    }
+  });
   res.json({ success: true });
 });
 
@@ -163,10 +294,13 @@ app.get("/api/auth/me", requireAuth, (req, res) => {
 });
 
 app.put("/api/auth/me", requireAuth, (req, res) => {
-  const { name } = req.body || {};
+  const { firstName, lastName, phone } = req.body || {};
   const updated = updateDb((db) => {
     const user = db.users.find((item) => item.id === req.user.id);
-    user.name = String(name || user.name).trim();
+    user.firstName = String(firstName || user.firstName || "").trim();
+    user.lastName = String(lastName || user.lastName || "").trim();
+    user.name = `${user.firstName} ${user.lastName}`.trim();
+    user.phone = String(phone || user.phone || "").trim();
     user.updatedAt = new Date().toISOString();
     return user;
   });
@@ -352,6 +486,6 @@ app.post("/api/wallet/recharge/:id/verify", requireAuth, (req, res) => {
 seedDemoUser();
 
 app.listen(port, () => {
-  console.log(`Host Bot backend running at http://localhost:${port}/api`);
+  console.log(`Host Bot backend running on port ${port}`);
   console.log("Demo login: demo@hostbot.local / password123");
 });

@@ -4,10 +4,14 @@
       "id": "usr_1782234487065_c712ba4e",
       "name": "Demo User",
       "email": "demo@hostbot.local",
-      "passwordHash": "c6a2de1760a239a0d20587eff7afd48f:713086f16b9b39d43e25cf202dca42b4213d47f066aaedf53361e29cf369cfaba651a3a7d64e40fc016bfb332749548a2456551e0db924c6a5837a1dee0cfa72",
+      "passwordHash": "fc91ecd6f118ddc66a590d4327f8bd3f:503f1780699b4c3699f5c4a4e16fd12855b465bfa11c303be871d48e43eb02376107b9ba457b094294d7acbd60d083efc58e4678da350c07fc404d0d22c2da6f",
       "createdAt": "2026-06-23T17:08:07.063Z",
-      "updatedAt": "2026-06-23T17:20:52.782Z",
-      "username": "demo"
+      "updatedAt": "2026-06-23T18:09:25.730Z",
+      "username": "demo",
+      "firstName": "Demo",
+      "lastName": "User",
+      "phone": "+254700000000",
+      "emailVerified": true
     }
   ],
   "bots": [

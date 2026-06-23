@@ -1,6 +1,6 @@
 import { Button, Input, StatusBanner } from "@/components/ui";
 import { COLORS } from "@/constants";
-import { authService } from "@/services/auth/auth.service";
+import { googleService } from "@/services/auth/google.service";
 import { useAuthStore } from "@/store/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -15,24 +15,50 @@ import {
   View,
 } from "react-native";
 
-export default function LoginScreen() {
-  const setSession = useAuthStore((state) => state.setSession);
-  const [identifier, setIdentifier] = useState("demo");
-  const [password, setPassword] = useState("password123");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const login = async () => {
-    setLoading(true);
+export default function LoginScreen() {
+  const loginWithPassword = useAuthStore((state) => state.login);
+  const setGoogleSession = useAuthStore((state) => state.googleLogin);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const googleAvailable = googleService.isAvailable();
+
+  const validate = () => {
+    if (!email.trim() || !password) return "Email and password are required.";
+    if (!emailPattern.test(email.trim())) return "Enter a valid email address.";
+    if (password.length < 8) return "Password must be at least 8 characters.";
+    return null;
+  };
+
+  const submit = async () => {
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setError(null);
     try {
-      const session = await authService.login({ identifier, password });
-      setSession(session.user, session.token);
+      await loginWithPassword({ email: email.trim().toLowerCase(), password });
       router.replace("/dashboard" as any);
     } catch (err) {
       setError((err as Error).message);
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    setError(null);
+    try {
+      const session = await googleService.login();
+      await setGoogleSession(session);
+      router.replace("/dashboard" as any);
+    } catch (err) {
+      setError((err as Error).message);
     }
   };
 
@@ -45,35 +71,65 @@ export default function LoginScreen() {
         <View style={styles.brandMark}>
           <Ionicons name="hardware-chip-outline" size={34} color={COLORS.white} />
         </View>
-
         <Text style={styles.brand}>Host Bot</Text>
-        <Text style={styles.subtitle}>Deploy, pair, fund, and manage your bots.</Text>
+        <Text style={styles.subtitle}>Sign in to deploy and manage bots from any device.</Text>
 
-        {error ? (
-          <StatusBanner type="error" title="Login failed" message={error} />
-        ) : null}
+        {error ? <StatusBanner type="error" title="Sign in failed" message={error} /> : null}
 
         <View style={styles.card}>
-          <View style={styles.demoBox}>
-            <Text style={styles.demoTitle}>Demo account</Text>
-            <Text style={styles.demoText}>Username: demo  Password: password123</Text>
-          </View>
-
           <Input
             autoCapitalize="none"
-            label="Username or Email"
-            value={identifier}
-            onChangeText={setIdentifier}
-            placeholder="demo or demo@hostbot.local"
+            keyboardType="email-address"
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@example.com"
           />
-          <Input
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Password"
-            secureTextEntry
-          />
-          <Button title="Login" onPress={login} loading={loading} />
+
+          <View>
+            <Input
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              secureTextEntry={!showPassword}
+            />
+            <Pressable style={styles.eyeButton} onPress={() => setShowPassword((value) => !value)}>
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color={COLORS.muted}
+              />
+            </Pressable>
+          </View>
+
+          <View style={styles.optionsRow}>
+            <Pressable
+              style={styles.remember}
+              onPress={() => setRememberMe((value) => !value)}
+            >
+              <Ionicons
+                name={rememberMe ? "checkbox" : "square-outline"}
+                size={20}
+                color={COLORS.primary}
+              />
+              <Text style={styles.optionText}>Remember me</Text>
+            </Pressable>
+
+            <Pressable onPress={() => router.push("/forgot-password" as any)}>
+              <Text style={styles.linkText}>Forgot password?</Text>
+            </Pressable>
+          </View>
+
+          <Button title="Login" onPress={submit} loading={isLoading} />
+
+          {googleAvailable ? (
+            <Pressable style={styles.googleButton} onPress={loginWithGoogle}>
+              <Ionicons name="logo-google" size={20} color={COLORS.text} />
+              <Text style={styles.googleText}>Continue with Google</Text>
+            </Pressable>
+          ) : null}
+
           <Pressable onPress={() => router.push("/register" as any)} style={styles.linkButton}>
             <Text style={styles.linkText}>Create an account</Text>
           </Pressable>
@@ -85,11 +141,7 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.background },
-  content: {
-    flexGrow: 1,
-    justifyContent: "center",
-    padding: 20,
-  },
+  content: { flexGrow: 1, justifyContent: "center", padding: 20 },
   brandMark: {
     alignItems: "center",
     alignSelf: "center",
@@ -116,14 +168,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 18,
   },
-  demoBox: {
-    backgroundColor: COLORS.successLight,
-    borderRadius: 14,
-    marginBottom: 16,
-    padding: 12,
+  eyeButton: { position: "absolute", right: 12, top: 39, padding: 8 },
+  optionsRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
-  demoTitle: { color: COLORS.successDark, fontWeight: "800" },
-  demoText: { color: COLORS.successDeep, marginTop: 4 },
+  remember: { alignItems: "center", flexDirection: "row", gap: 6 },
+  optionText: { color: COLORS.muted, fontWeight: "600" },
+  googleButton: {
+    alignItems: "center",
+    borderColor: COLORS.border,
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "center",
+    marginHorizontal: 20,
+    marginTop: 8,
+    paddingVertical: 15,
+  },
+  googleText: { color: COLORS.text, fontWeight: "700" },
   linkButton: { alignItems: "center", paddingVertical: 16 },
   linkText: { color: COLORS.primary, fontWeight: "700" },
 });

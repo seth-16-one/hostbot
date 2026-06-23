@@ -1,7 +1,6 @@
 import PageHeader from "@/components/layout/PageHeader";
 import Screen from "@/components/layout/Screen";
 import { COLORS } from "@/constants";
-import { authService } from "@/services/auth/auth.service";
 import { useAuthStore } from "@/store/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -9,15 +8,11 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function MoreScreen() {
   const user = useAuthStore((state) => state.user);
-  const clearSession = useAuthStore((state) => state.clearSession);
+  const logoutSession = useAuthStore((state) => state.logout);
 
   const logout = async () => {
-    try {
-      await authService.logout();
-    } finally {
-      clearSession();
-      router.replace("/login" as any);
-    }
+    await logoutSession();
+    router.replace("/login" as any);
   };
 
   return (
@@ -33,7 +28,7 @@ export default function MoreScreen() {
           <View style={styles.card}>
             <View style={styles.profileSummary}>
               <Text style={styles.profileName}>{user?.name ?? "Host Bot User"}</Text>
-              <Text style={styles.profileMeta}>@{user?.username ?? "user"} • {user?.email}</Text>
+              <Text style={styles.profileMeta}>{user?.email}</Text>
             </View>
 
             <MenuItem
