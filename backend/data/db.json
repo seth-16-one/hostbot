@@ -148,6 +148,26 @@
   ],
   "deployments": [
     {
+      "id": "dep_1782256383026_4f84c704",
+      "userId": "usr_1782234487065_c712ba4e",
+      "botId": 1,
+      "botName": "SethBot-MD",
+      "ownerNumber": "",
+      "prefix": ".",
+      "sessionName": "sethbot-md-1782256381740",
+      "status": "online",
+      "createdAt": "2026-06-23T23:13:03.026Z",
+      "updatedAt": "2026-06-23T23:22:15.913Z",
+      "session": {
+        "id": "ses_1782256383089_907b9358",
+        "deploymentId": "dep_1782256383026_4f84c704",
+        "pairCode": "3C96F21D",
+        "qrValue": "hostbot://pair/dep_1782256383026_4f84c704?code=3C96F21D",
+        "expiresAt": "2026-06-23T23:18:03.089Z",
+        "createdAt": "2026-06-23T23:13:03.089Z"
+      }
+    },
+    {
       "id": "dep_1782235119576_5f436c58",
       "userId": "usr_1782234487065_c712ba4e",
       "botId": 1,
@@ -171,11 +191,21 @@
   "wallets": [
     {
       "userId": "usr_1782234487065_c712ba4e",
-      "credits": 550,
-      "updatedAt": "2026-06-23T17:18:39.624Z"
+      "credits": 650,
+      "updatedAt": "2026-06-23T23:11:58.141Z"
     }
   ],
   "transactions": [
+    {
+      "id": "txn_1782256318141_825b814d",
+      "userId": "usr_1782234487065_c712ba4e",
+      "type": "credit",
+      "status": "completed",
+      "amount": 100,
+      "description": "Wallet recharge",
+      "reference": "rch_1782256318118_2b12be2d",
+      "createdAt": "2026-06-23T23:11:58.141Z"
+    },
     {
       "id": "txn_1782235119624_b9a63690",
       "userId": "usr_1782234487065_c712ba4e",
@@ -220,6 +250,15 @@
     }
   ],
   "recharges": [
+    {
+      "id": "rch_1782256318118_2b12be2d",
+      "userId": "usr_1782234487065_c712ba4e",
+      "status": "completed",
+      "amount": 150,
+      "credits": 100,
+      "paymentMethod": "mpesa",
+      "createdAt": "2026-06-23T23:11:58.118Z"
+    },
     {
       "id": "rch_1782235119610_8b6652f3",
       "userId": "usr_1782234487065_c712ba4e",

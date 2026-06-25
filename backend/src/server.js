@@ -3,8 +3,14 @@ require("dotenv").config();
 const crypto = require("crypto");
 const cors = require("cors");
 const express = require("express");
-const { createTokenPair, hashPassword, verifyPassword, verifyToken } = require("./auth");
-const { readDb, updateDb } = require("./database");
+const {
+  createTokenPair,
+  hashPassword,
+  verifyPassword,
+  verifyToken,
+} = require("./utils/auth.legacy");
+
+const { readDb, updateDb } = require("./config/database");
 
 const app = express();
 const port = Number(process.env.BACKEND_PORT || 3001);
@@ -64,7 +70,9 @@ function ensureWallet(db, userId) {
 
 function seedDemoUser() {
   updateDb((db) => {
-    const existing = db.users.find((user) => user.email === "demo@hostbot.local");
+    const existing = db.users.find(
+      (user) => user.email === "demo@hostbot.local",
+    );
     if (existing) {
       let changed = false;
       const assign = (key, value) => {
@@ -133,8 +141,18 @@ function sendAuthSession(res, user, status = 200) {
 
 app.post("/api/auth/register", (req, res) => {
   const { firstName, lastName, email, phone, password } = req.body || {};
-  if (!firstName || !lastName || !email || !phone || !password || password.length < 8) {
-    return res.status(400).json({ message: "First name, last name, email, phone, and an 8+ character password are required" });
+  if (
+    !firstName ||
+    !lastName ||
+    !email ||
+    !phone ||
+    !password ||
+    password.length < 8
+  ) {
+    return res.status(400).json({
+      message:
+        "First name, last name, email, phone, and an 8+ character password are required",
+    });
   }
 
   const normalizedEmail = String(email).trim().toLowerCase();
@@ -171,7 +189,9 @@ app.post("/api/auth/register", (req, res) => {
 
 app.post("/api/auth/login", (req, res) => {
   const { email, password } = req.body || {};
-  const loginId = String(email || "").trim().toLowerCase();
+  const loginId = String(email || "")
+    .trim()
+    .toLowerCase();
   const db = readDb();
   const user = db.users.find((item) => item.email === loginId);
 
@@ -236,12 +256,16 @@ app.post("/api/auth/google", (req, res) => {
 
 app.post("/api/auth/forgot-password", (req, res) => {
   const { email } = req.body || {};
-  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const normalizedEmail = String(email || "")
+    .trim()
+    .toLowerCase();
   updateDb((db) => {
     const user = db.users.find((item) => item.email === normalizedEmail);
     if (user) {
       user.resetPasswordToken = createEmailToken();
-      user.resetPasswordExpiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      user.resetPasswordExpiresAt = new Date(
+        Date.now() + 60 * 60 * 1000,
+      ).toISOString();
       user.updatedAt = new Date().toISOString();
     }
   });
@@ -251,7 +275,9 @@ app.post("/api/auth/forgot-password", (req, res) => {
 app.post("/api/auth/reset-password", (req, res) => {
   const { token, password } = req.body || {};
   if (!token || !password || password.length < 8) {
-    return res.status(400).json({ message: "Valid token and password are required" });
+    return res
+      .status(400)
+      .json({ message: "Valid token and password are required" });
   }
 
   const result = updateDb((db) => {
@@ -289,7 +315,9 @@ app.post("/api/auth/verify-email", (req, res) => {
 
 app.post("/api/auth/resend-verification", (req, res) => {
   const { email } = req.body || {};
-  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const normalizedEmail = String(email || "")
+    .trim()
+    .toLowerCase();
   updateDb((db) => {
     const user = db.users.find((item) => item.email === normalizedEmail);
     if (user && !user.emailVerified) {
@@ -350,7 +378,9 @@ app.post("/api/deployments", requireAuth, (req, res) => {
       botName: botName || bot.name,
       ownerNumber: ownerNumber || "",
       prefix: prefix || bot.deploymentConfig.defaultPrefix,
-      sessionName: sessionName || `${bot.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
+      sessionName:
+        sessionName ||
+        `${bot.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
       status: "queued",
       createdAt: now,
       updatedAt: now,
@@ -367,7 +397,9 @@ app.post("/api/deployments", requireAuth, (req, res) => {
 
 app.post("/api/deployments/:id/session", requireAuth, (req, res) => {
   const result = updateDb((db) => {
-    const deployment = db.deployments.find((item) => item.id === req.params.id && item.userId === req.user.id);
+    const deployment = db.deployments.find(
+      (item) => item.id === req.params.id && item.userId === req.user.id,
+    );
     if (!deployment) return { error: "Deployment not found" };
     const now = new Date();
     const pairCode = crypto.randomBytes(4).toString("hex").toUpperCase();
@@ -418,14 +450,19 @@ app.delete("/api/deployments/:id", requireAuth, (req, res) => {
 });
 
 app.get("/api/deployments/:id/status", requireAuth, (req, res) => {
-  const deployment = readDb().deployments.find((item) => item.id === req.params.id && item.userId === req.user.id);
-  if (!deployment) return res.status(404).json({ message: "Deployment not found" });
+  const deployment = readDb().deployments.find(
+    (item) => item.id === req.params.id && item.userId === req.user.id,
+  );
+  if (!deployment)
+    return res.status(404).json({ message: "Deployment not found" });
   res.json({ status: deployment.status });
 });
 
 function setDeploymentStatus(deploymentId, userId, status) {
   return updateDb((db) => {
-    const deployment = db.deployments.find((item) => item.id === deploymentId && item.userId === userId);
+    const deployment = db.deployments.find(
+      (item) => item.id === deploymentId && item.userId === userId,
+    );
     if (!deployment) return { error: "Deployment not found" };
     deployment.status = status;
     deployment.updatedAt = new Date().toISOString();
@@ -470,7 +507,9 @@ app.post("/api/wallet/recharge", requireAuth, (req, res) => {
 
 app.post("/api/wallet/recharge/:id/verify", requireAuth, (req, res) => {
   const result = updateDb((db) => {
-    const recharge = db.recharges.find((item) => item.id === req.params.id && item.userId === req.user.id);
+    const recharge = db.recharges.find(
+      (item) => item.id === req.params.id && item.userId === req.user.id,
+    );
     if (!recharge) return { error: "Recharge not found" };
     if (recharge.status !== "completed") {
       recharge.status = "completed";
