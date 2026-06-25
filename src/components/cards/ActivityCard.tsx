@@ -26,7 +26,7 @@ export default function ActivityCard({
 
   const color =
     type === "success"
-      ? "COLORS.primary"
+      ? COLORS.primary
       : type === "warning"
         ? COLORS.warning
         : COLORS.info;

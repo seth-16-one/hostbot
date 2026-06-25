@@ -28,7 +28,7 @@ export default function CreditUsageCard({
         style={[
           styles.status,
           {
-            color: enoughCredits ? "COLORS.primary" : COLORS.danger,
+            color: enoughCredits ? COLORS.primary : COLORS.danger,
           },
         ]}
       >

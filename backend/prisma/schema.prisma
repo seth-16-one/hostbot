@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String  @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String  @unique
+  phone         String?
+  passwordHash  String
+  emailVerified Boolean @default(false)
+
+  deployments  Deployment[]
+  wallet       Wallet?
+  transactions Transaction[]
+  recharges    Recharge[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Bot {
+  id Int @id @default(autoincrement())
+
+  name            String
+  description     String?
+  longDescription String?
+
+  icon     String?
+  category String?
+  version  String?
+
+  rating   Float   @default(0)
+  featured Boolean @default(false)
+
+  minimumCreditsRequired Int @default(0)
+  runCreditsPerHour      Int @default(0)
+
+  status String @default("active")
+
+  totalDeployments Int @default(0)
+
+  lastUpdated String?
+
+  features     String[]
+  requirements String[]
+
+  deployments Deployment[]
+
+  createdAt DateTime @default(now())
+}
+
+model Deployment {
+  id String @id @default(cuid())
+
+  userId String
+  botId  Int
+
+  botName     String
+  ownerNumber String?
+  prefix      String?
+  sessionName String?
+  status      String  @default("queued")
+
+  user User @relation(fields: [userId], references: [id])
+  bot  Bot  @relation(fields: [botId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Wallet {
+  id String @id @default(cuid())
+
+  userId  String @unique
+  credits Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+  id String @id @default(cuid())
+
+  userId String
+
+  type   String
+  status String
+  amount Int
+
+  description String?
+  reference   String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Recharge {
+  id String @id @default(cuid())
+
+  userId String
+
+  amount  Int
+  credits Int
+
+  paymentMethod String
+  status        String @default("pending")
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}

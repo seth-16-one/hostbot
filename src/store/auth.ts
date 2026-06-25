@@ -80,6 +80,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const session = await authService.login(input);
+
+      console.log("LOGIN SESSION:", session);
       await get().setSession(
         session.user,
         session.accessToken,
@@ -148,21 +150,33 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   loadSession: async () => {
     set({ isLoading: true, error: null });
+
     try {
       const accessToken = await tokenService.getAccessToken();
       const refreshToken = await tokenService.getRefreshToken();
 
+      console.log("ACCESS TOKEN:", accessToken);
+      console.log("REFRESH TOKEN:", refreshToken);
+
       if (!accessToken || !refreshToken) {
+        console.log("❌ No tokens found");
         await get().clearSession();
         return;
       }
 
+      console.log("Checking token expiry...");
+
       if (tokenService.isTokenExpired(accessToken)) {
+        console.log("⚠️ Token expired. Refreshing...");
         await get().refreshSession();
         return;
       }
 
+      console.log("Calling /auth/me...");
       const user = await authService.me();
+
+      console.log("USER:", user);
+
       set({
         user,
         accessToken,
@@ -172,10 +186,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         hasCheckedSession: true,
         error: null,
       });
-    } catch {
+    } catch (error) {
+      console.log("LOAD SESSION ERROR:", error);
+
       try {
+        console.log("Trying refresh...");
         await get().refreshSession();
-      } catch {
+      } catch (refreshError) {
+        console.log("REFRESH FAILED:", refreshError);
         await get().clearSession();
       }
     }

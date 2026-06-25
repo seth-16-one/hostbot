@@ -17,7 +17,7 @@ export default function ServerStatusCard({
 }: Props) {
   const color =
     status === "online"
-      ? "COLORS.primary"
+      ? COLORS.primary
       : status === "warning"
         ? COLORS.warning
         : COLORS.danger;

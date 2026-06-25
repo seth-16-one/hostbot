@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   },
 
   actionButton: {
-    backgroundColor: "COLORS.whiteff",
+    backgroundColor: COLORS.white,
 
     marginHorizontal: 16,
     marginBottom: 12,

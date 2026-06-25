@@ -16,9 +16,13 @@ export interface RegisterInput {
 
 export const authService = {
   async register(input: RegisterInput): Promise<AuthSession> {
-    const response = await apiClient.post<AuthSession>("/auth/register", input, {
-      auth: false,
-    });
+    const response = await apiClient.post<AuthSession>(
+      "/auth/register",
+      input,
+      {
+        auth: false,
+      },
+    );
     await tokenService.saveTokens(response.data);
     return response.data;
   },
@@ -94,7 +98,9 @@ export const authService = {
 
   async logout(): Promise<void> {
     const refreshToken = await tokenService.getRefreshToken();
-    await apiClient.post<{ success: boolean }>("/auth/logout", { refreshToken });
+    await apiClient.post<{ success: boolean }>("/auth/logout", {
+      refreshToken,
+    });
     await tokenService.clearTokens();
   },
 };

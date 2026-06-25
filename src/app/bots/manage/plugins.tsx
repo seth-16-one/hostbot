@@ -52,7 +52,7 @@ export default function PluginsScreen() {
               <Ionicons
                 name="checkmark-circle"
                 size={24}
-                color="COLORS.primary"
+                color={COLORS.primary}
               />
             </View>
           </View>

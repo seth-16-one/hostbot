@@ -11,6 +11,8 @@ const {
 } = require("./utils/auth.legacy");
 
 const { readDb, updateDb } = require("./config/database");
+const prisma = require("./config/prisma");
+const { findUserByEmail, findUserById } = require("./services/auth.service");
 
 const app = express();
 const port = Number(process.env.BACKEND_PORT || 3001);
@@ -187,16 +189,21 @@ app.post("/api/auth/register", (req, res) => {
   sendAuthSession(res, result.user, 201);
 });
 
-app.post("/api/auth/login", (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body || {};
+
   const loginId = String(email || "")
     .trim()
     .toLowerCase();
-  const db = readDb();
-  const user = db.users.find((item) => item.email === loginId);
+
+  const user = await findUserByEmail(loginId);
+
+  console.log(user);
 
   if (!user || !verifyPassword(password, user.passwordHash)) {
-    return res.status(401).json({ message: "Invalid email or password" });
+    return res.status(401).json({
+      message: "Invalid email or password",
+    });
   }
 
   sendAuthSession(res, user);
@@ -360,6 +367,9 @@ app.get("/api/bots/:id", requireAuth, (req, res) => {
 
 app.get("/api/deployments", requireAuth, (req, res) => {
   const db = readDb();
+  console.log("LOGIN EMAIL:", loginId);
+  console.log("USERS IN JSON DB:", db.users.length);
+  console.log("FOUND USER:", user);
   res.json(db.deployments.filter((item) => item.userId === req.user.id));
 });
 

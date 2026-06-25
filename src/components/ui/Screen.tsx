@@ -8,7 +8,10 @@ export default function Screen({ children }: any) {
         flex: 1,
         backgroundColor: COLORS.background,
       }}
-      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{
+        flexGrow: 1,
+      }}
+      keyboardShouldPersistTaps="handled"
     >
       {children}
     </ScrollView>

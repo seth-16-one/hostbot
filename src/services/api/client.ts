@@ -1,4 +1,8 @@
-import { REQUEST_RETRIES, REQUEST_TIMEOUT_MS, requireApiUrl } from "@/config/env";
+import {
+  REQUEST_RETRIES,
+  REQUEST_TIMEOUT_MS,
+  requireApiUrl,
+} from "@/config/env";
 import { tokenService } from "@/services/auth/token.service";
 
 export interface ApiResponse<T> {
@@ -44,7 +48,8 @@ function getFriendlyMessage(status: number, payload: any) {
   if (status === 0) return "Unable to connect. Check your internet connection.";
   if (status === 401) return "Your session has expired. Please sign in again.";
   if (status === 408) return "The request timed out. Please try again.";
-  if (status >= 500) return "The server is unavailable. Please try again later.";
+  if (status >= 500)
+    return "The server is unavailable. Please try again later.";
   return "Request failed. Please try again.";
 }
 

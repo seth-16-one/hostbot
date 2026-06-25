@@ -46,7 +46,7 @@ export default function MyBotCard({
         <Ionicons
           name={isOnline ? "checkmark-circle" : "close-circle"}
           size={26}
-          color={isOnline ? "COLORS.primary" : COLORS.danger}
+          color={isOnline ? COLORS.primary : COLORS.danger}
         />
       </View>
     </Pressable>

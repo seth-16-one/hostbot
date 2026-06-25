@@ -71,7 +71,7 @@ async function removeSecureItem(key: string) {
   await AsyncStorage.removeItem(key);
 }
 
-function decodeJwtPayload(token: string): { exp?: number } | null {
+function decodeJwtPayload(token: string) {
   try {
     const payload = token.split(".")[0];
     return JSON.parse(atob(payload));
@@ -82,10 +82,14 @@ function decodeJwtPayload(token: string): { exp?: number } | null {
 
 export const tokenService = {
   async saveTokens(tokens: TokenPair) {
+    console.log("Saving tokens:", tokens);
+
     await Promise.all([
       setSecureItem(ACCESS_TOKEN_KEY, tokens.accessToken),
       setSecureItem(REFRESH_TOKEN_KEY, tokens.refreshToken),
     ]);
+
+    console.log("Tokens saved.");
   },
 
   async getAccessToken() {

@@ -18,7 +18,7 @@ export default function BotCard({ name, platform, status }: BotCardProps) {
           <Ionicons
             name="hardware-chip-outline"
             size={24}
-            color="COLORS.primary"
+            color={COLORS.primary}
           />
 
           <View>
