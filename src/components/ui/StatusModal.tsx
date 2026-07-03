@@ -1,6 +1,8 @@
-import { COLORS } from "@/constants";
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, StyleSheet, Text, View } from "react-native";
+
 import Button from "./Button";
 
 type StatusType = "success" | "error" | "warning" | "info";
@@ -11,7 +13,6 @@ type Props = {
   type?: StatusType;
 
   title: string;
-
   message: string;
 
   primaryText?: string;
@@ -31,43 +32,33 @@ export default function StatusModal({
   onPrimaryPress,
   onSecondaryPress,
 }: Props) {
-  const getIcon = () => {
-    switch (type) {
-      case "success":
-        return "checkmark-circle";
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
 
-      case "error":
-        return "close-circle";
+  const tone = {
+    success: {
+      icon: "checkmark-circle",
+      color: theme.colors.success,
+      background: theme.colors.successLight,
+    },
+    error: {
+      icon: "close-circle",
+      color: theme.colors.danger,
+      background: theme.colors.dangerLight,
+    },
+    warning: {
+      icon: "warning",
+      color: theme.colors.warning,
+      background: theme.colors.warningLight,
+    },
+    info: {
+      icon: "information-circle",
+      color: theme.colors.info,
+      background: theme.colors.infoLight,
+    },
+  } as const;
 
-      case "warning":
-        return "warning";
-
-      case "info":
-        return "information-circle";
-
-      default:
-        return "checkmark-circle";
-    }
-  };
-
-  const getColor = () => {
-    switch (type) {
-      case "success":
-        return COLORS.success;
-
-      case "error":
-        return COLORS.danger;
-
-      case "warning":
-        return COLORS.warning;
-
-      case "info":
-        return COLORS.info;
-
-      default:
-        return COLORS.success;
-    }
-  };
+  const item = tone[type];
 
   return (
     <Modal
@@ -78,14 +69,27 @@ export default function StatusModal({
     >
       <View style={styles.overlay}>
         <View style={styles.modal}>
-          <Ionicons name={getIcon() as any} size={90} color={getColor()} />
+          <View
+            style={[
+              styles.iconContainer,
+              {
+                backgroundColor: item.background,
+              },
+            ]}
+          >
+            <Ionicons name={item.icon as any} size={72} color={item.color} />
+          </View>
 
           <Text style={styles.title}>{title}</Text>
 
           <Text style={styles.message}>{message}</Text>
 
           <View style={styles.buttonContainer}>
-            <Button title={primaryText} onPress={onPrimaryPress} />
+            <Button
+              title={primaryText}
+              variant={type === "error" ? "danger" : "primary"}
+              onPress={onPrimaryPress}
+            />
           </View>
 
           {secondaryText && onSecondaryPress && (
@@ -103,62 +107,86 @@ export default function StatusModal({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    overlay: {
+      flex: 1,
 
-    backgroundColor: "rgba(0,0,0,0.45)",
+      backgroundColor: theme.colors.overlay,
 
-    justifyContent: "center",
+      justifyContent: "center",
+      alignItems: "center",
 
-    alignItems: "center",
+      padding: 24,
+    },
 
-    padding: 24,
-  },
+    modal: {
+      width: "100%",
 
-  modal: {
-    width: "100%",
+      backgroundColor: theme.colors.card,
 
-    backgroundColor: COLORS.white,
+      borderRadius: 28,
 
-    borderRadius: 28,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
 
-    padding: 24,
+      padding: 24,
 
-    alignItems: "center",
-  },
+      alignItems: "center",
 
-  title: {
-    fontSize: 24,
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.12,
+      shadowRadius: 18,
+      shadowOffset: {
+        width: 0,
+        height: 8,
+      },
 
-    fontWeight: "700",
+      elevation: 10,
+    },
 
-    color: COLORS.text,
+    iconContainer: {
+      width: 110,
+      height: 110,
 
-    marginTop: 16,
+      borderRadius: 55,
 
-    textAlign: "center",
-  },
+      justifyContent: "center",
+      alignItems: "center",
 
-  message: {
-    marginTop: 10,
+      marginBottom: 18,
+    },
 
-    color: COLORS.muted,
+    title: {
+      color: theme.colors.text,
 
-    textAlign: "center",
+      fontSize: 24,
+      fontWeight: "800",
 
-    lineHeight: 22,
+      textAlign: "center",
+    },
 
-    marginBottom: 24,
-  },
+    message: {
+      marginTop: 10,
 
-  buttonContainer: {
-    width: "100%",
-  },
+      color: theme.colors.secondaryText,
 
-  secondaryContainer: {
-    width: "100%",
+      textAlign: "center",
 
-    marginTop: 12,
-  },
-});
+      fontSize: 15,
+
+      lineHeight: 24,
+
+      marginBottom: 28,
+    },
+
+    buttonContainer: {
+      width: "100%",
+    },
+
+    secondaryContainer: {
+      width: "100%",
+      marginTop: 12,
+    },
+  });
+}

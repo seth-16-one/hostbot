@@ -1,5 +1,5 @@
 import Toast from "@/components/ui/Toast";
-import { ToastContext, ToastType } from "@/context/ToastContext";
+import { ToastContext, ToastData, ToastType } from "@/context/ToastContext";
 import { ReactNode, useState } from "react";
 
 type Props = {
@@ -9,13 +9,19 @@ type Props = {
 export default function ToastProvider({ children }: Props) {
   const [visible, setVisible] = useState(false);
 
-  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState({
+    title: "",
+    message: "",
+    type: "success" as ToastType,
+  });
 
-  const [type, setType] = useState<ToastType>("success");
+  const showToast = (toastData: ToastData) => {
+    setToast({
+      title: toastData.title,
+      message: toastData.message,
+      type: toastData.type ?? "success",
+    });
 
-  const showToast = (text: string, toastType: ToastType = "success") => {
-    setMessage(text);
-    setType(toastType);
     setVisible(true);
   };
 
@@ -25,8 +31,9 @@ export default function ToastProvider({ children }: Props) {
 
       <Toast
         visible={visible}
-        message={message}
-        type={type}
+        title={toast.title}
+        message={toast.message}
+        type={toast.type}
         onHide={() => setVisible(false)}
       />
     </ToastContext.Provider>

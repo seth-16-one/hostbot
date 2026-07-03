@@ -1,13 +1,15 @@
-import { COLORS } from "@/constants";
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect } from "react";
-import { Animated, StyleSheet, Text } from "react-native";
+import { useEffect, useRef } from "react";
+import { Animated, StyleSheet, Text, View } from "react-native";
 
 type ToastType = "success" | "error" | "warning" | "info";
 
 type Props = {
   visible: boolean;
   type?: ToastType;
+  title: string;
   message: string;
   duration?: number;
   onHide: () => void;
@@ -16,111 +18,154 @@ type Props = {
 export default function Toast({
   visible,
   type = "success",
+  title,
   message,
   duration = 3000,
   onHide,
 }: Props) {
-  const translateY = new Animated.Value(-120);
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
+  const translateY = useRef(new Animated.Value(-150)).current;
 
   useEffect(() => {
     if (!visible) return;
 
     Animated.sequence([
-      Animated.timing(translateY, {
+      Animated.spring(translateY, {
         toValue: 0,
-        duration: 250,
         useNativeDriver: true,
       }),
 
       Animated.delay(duration),
 
       Animated.timing(translateY, {
-        toValue: -120,
+        toValue: -150,
         duration: 250,
         useNativeDriver: true,
       }),
-    ]).start(() => onHide());
+    ]).start(onHide);
   }, [visible]);
 
   if (!visible) return null;
 
-  const icon =
-    type === "success"
-      ? "checkmark-circle"
-      : type === "error"
-        ? "close-circle"
-        : type === "warning"
-          ? "warning"
-          : "information-circle";
+  const tone = {
+    success: {
+      icon: "checkmark-circle",
+      color: theme.colors.success,
+      background: theme.colors.successLight,
+    },
+    error: {
+      icon: "close-circle",
+      color: theme.colors.danger,
+      background: theme.colors.dangerLight,
+    },
+    warning: {
+      icon: "warning",
+      color: theme.colors.warning,
+      background: theme.colors.warningLight,
+    },
+    info: {
+      icon: "information-circle",
+      color: theme.colors.info,
+      background: theme.colors.infoLight,
+    },
+  } as const;
 
-  const color =
-    type === "success"
-      ? COLORS.success
-      : type === "error"
-        ? COLORS.danger
-        : type === "warning"
-          ? COLORS.warning
-          : COLORS.info;
+  const item = tone[type];
 
   return (
     <Animated.View
       style={[
         styles.container,
         {
+          backgroundColor: theme.colors.card,
           transform: [{ translateY }],
         },
       ]}
     >
-      <Ionicons name={icon as any} size={22} color={color} />
+      <View
+        style={[
+          styles.iconContainer,
+          {
+            backgroundColor: item.background,
+          },
+        ]}
+      >
+        <Ionicons name={item.icon as any} size={22} color={item.color} />
+      </View>
 
-      <Text style={styles.message}>{message}</Text>
+      <View style={styles.content}>
+        <Text style={styles.title}>{title}</Text>
+
+        <Text style={styles.message}>{message}</Text>
+      </View>
     </Animated.View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: "absolute",
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    container: {
+      position: "absolute",
 
-    top: 60,
+      top: 60,
+      left: 20,
+      right: 20,
 
-    left: 20,
-    right: 20,
+      zIndex: 9999,
 
-    zIndex: 999,
+      flexDirection: "row",
+      alignItems: "center",
 
-    flexDirection: "row",
+      borderRadius: 18,
 
-    alignItems: "center",
+      padding: 16,
 
-    backgroundColor: COLORS.white,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
 
-    borderRadius: 16,
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      shadowOffset: {
+        width: 0,
+        height: 6,
+      },
 
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-
-    shadowColor: COLORS.shadow,
-
-    shadowOffset: {
-      width: 0,
-      height: 3,
+      elevation: 8,
     },
 
-    shadowOpacity: 0.15,
+    iconContainer: {
+      width: 46,
+      height: 46,
 
-    shadowRadius: 8,
+      borderRadius: 14,
 
-    elevation: 6,
-  },
+      justifyContent: "center",
+      alignItems: "center",
 
-  message: {
-    flex: 1,
+      marginRight: 14,
+    },
 
-    marginLeft: 10,
+    content: {
+      flex: 1,
+    },
 
-    color: COLORS.text,
+    title: {
+      color: theme.colors.text,
 
-    fontWeight: "600",
-  },
-});
+      fontSize: 15,
+      fontWeight: "800",
+    },
+
+    message: {
+      marginTop: 3,
+
+      color: theme.colors.secondaryText,
+
+      fontSize: 13,
+      lineHeight: 20,
+    },
+  });
+}

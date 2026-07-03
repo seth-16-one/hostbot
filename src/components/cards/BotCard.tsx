@@ -1,6 +1,8 @@
-import { COLORS } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 
 type BotCardProps = {
   name: string;
@@ -9,17 +11,22 @@ type BotCardProps = {
 };
 
 export default function BotCard({ name, platform, status }: BotCardProps) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   const isRunning = status === "Running";
 
   return (
     <View style={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.left}>
-          <Ionicons
-            name="hardware-chip-outline"
-            size={24}
-            color={COLORS.primary}
-          />
+          <View style={styles.iconBox}>
+            <Ionicons
+              name="hardware-chip-outline"
+              size={24}
+              color={theme.colors.primary}
+            />
+          </View>
 
           <View>
             <Text style={styles.name}>{name}</Text>
@@ -33,16 +40,18 @@ export default function BotCard({ name, platform, status }: BotCardProps) {
             styles.statusBadge,
             {
               backgroundColor: isRunning
-                ? "COLORS.successBg"
-                : "COLORS.dangerBg",
+                ? theme.colors.successLight
+                : theme.colors.dangerLight,
             },
           ]}
         >
           <Text
-            style={{
-              color: isRunning ? COLORS.success : COLORS.danger,
-              fontWeight: "600",
-            }}
+            style={[
+              styles.statusText,
+              {
+                color: isRunning ? theme.colors.success : theme.colors.danger,
+              },
+            ]}
           >
             {status}
           </Text>
@@ -51,67 +60,120 @@ export default function BotCard({ name, platform, status }: BotCardProps) {
 
       <View style={styles.actions}>
         <Pressable style={styles.actionButton}>
-          <Text>Logs</Text>
+          <Text style={styles.actionText}>Logs</Text>
         </Pressable>
 
         <Pressable style={styles.actionButton}>
-          <Text>Restart</Text>
+          <Text style={styles.actionText}>Restart</Text>
         </Pressable>
 
         <Pressable style={styles.actionButton}>
-          <Text>Settings</Text>
+          <Text style={styles.actionText}>Settings</Text>
         </Pressable>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.white,
-    padding: 16,
-    borderRadius: 18,
-    marginBottom: 12,
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: theme.colors.card,
 
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
+      borderRadius: 22,
 
-  left: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
+      borderWidth: 1,
+      borderColor: theme.colors.border,
 
-  name: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
+      padding: 18,
 
-  platform: {
-    color: COLORS.muted,
-    marginTop: 2,
-  },
+      marginBottom: 14,
 
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-  },
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      shadowOffset: {
+        width: 0,
+        height: 5,
+      },
 
-  actions: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 16,
-  },
+      elevation: 4,
+    },
 
-  actionButton: {
-    backgroundColor: COLORS.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-});
+    topRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+
+    left: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+
+    iconBox: {
+      width: 48,
+      height: 48,
+
+      borderRadius: 14,
+
+      backgroundColor: theme.colors.successLight,
+
+      justifyContent: "center",
+      alignItems: "center",
+
+      marginRight: 14,
+    },
+
+    name: {
+      color: theme.colors.text,
+
+      fontSize: 16,
+      fontWeight: "800",
+    },
+
+    platform: {
+      marginTop: 3,
+
+      color: theme.colors.secondaryText,
+
+      fontSize: 13,
+    },
+
+    statusBadge: {
+      paddingHorizontal: 12,
+      paddingVertical: 7,
+      borderRadius: 12,
+    },
+
+    statusText: {
+      fontWeight: "700",
+      fontSize: 13,
+    },
+
+    actions: {
+      flexDirection: "row",
+      gap: 10,
+
+      marginTop: 18,
+    },
+
+    actionButton: {
+      backgroundColor: theme.colors.surface,
+
+      borderRadius: 12,
+
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+    },
+
+    actionText: {
+      color: theme.colors.text,
+      fontWeight: "700",
+      fontSize: 13,
+    },
+  });
+}

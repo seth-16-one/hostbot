@@ -15,15 +15,11 @@ export interface RegisterInput {
 }
 
 export const authService = {
-  async register(input: RegisterInput): Promise<AuthSession> {
-    const response = await apiClient.post<AuthSession>(
-      "/auth/register",
-      input,
-      {
-        auth: false,
-      },
-    );
-    await tokenService.saveTokens(response.data);
+  async register(input: RegisterInput) {
+    const response = await apiClient.post("/auth/register", input, {
+      auth: false,
+    });
+
     return response.data;
   },
 
@@ -71,8 +67,19 @@ export const authService = {
     );
   },
 
+  async resendPasswordOtp(email: string): Promise<void> {
+    await apiClient.post(
+      "/auth/resend-password-otp",
+      { email },
+      {
+        auth: false,
+      },
+    );
+  },
+
   async resetPassword(input: {
-    token: string;
+    email: string;
+    otp: string;
     password: string;
   }): Promise<void> {
     await apiClient.post<{ success: boolean }>("/auth/reset-password", input, {
@@ -80,16 +87,23 @@ export const authService = {
     });
   },
 
-  async verifyEmail(token: string): Promise<void> {
-    await apiClient.post<{ success: boolean }>(
-      "/auth/verify-email",
-      { token },
-      { auth: false },
-    );
+  async verifyEmailOtp(input: { email: string; otp: string }): Promise<void> {
+    await apiClient.post("/auth/verify-email-otp", input, {
+      auth: false,
+    });
+  },
+
+  async verifyPasswordOtp(input: {
+    email: string;
+    otp: string;
+  }): Promise<void> {
+    await apiClient.post("/auth/verify-password-otp", input, {
+      auth: false,
+    });
   },
 
   async resendVerification(email: string): Promise<void> {
-    await apiClient.post<{ success: boolean }>(
+    await apiClient.post(
       "/auth/resend-verification",
       { email },
       { auth: false },

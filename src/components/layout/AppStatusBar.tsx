@@ -1,3 +1,4 @@
+import { useTheme } from "@/theme";
 import { StatusBar } from "expo-status-bar";
 
 type Props = {
@@ -5,5 +6,7 @@ type Props = {
 };
 
 export default function AppStatusBar({ light = false }: Props) {
-  return <StatusBar style="auto" />;
+  const { theme } = useTheme();
+
+  return <StatusBar style={light ? "light" : theme.dark ? "light" : "dark"} />;
 }

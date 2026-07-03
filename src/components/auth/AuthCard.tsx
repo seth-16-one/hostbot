@@ -16,6 +16,10 @@ export default function AuthCard({ children }: Props) {
         {
           backgroundColor: theme.colors.card,
           borderColor: theme.colors.border,
+
+          shadowColor: theme.colors.shadow,
+
+          shadowOpacity: theme.dark ? 0.25 : 0.12,
         },
       ]}
     >
@@ -27,15 +31,16 @@ export default function AuthCard({ children }: Props) {
 const styles = StyleSheet.create({
   card: {
     borderRadius: 28,
+
     borderWidth: 1,
+
     padding: 24,
 
-    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 10,
     },
-    shadowOpacity: 0.12,
+
     shadowRadius: 20,
 
     elevation: 10,

@@ -1,5 +1,7 @@
-import { COLORS } from "@/constants";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 
 type Props = {
   title: string;
@@ -18,6 +20,9 @@ export default function PricingCard({
   buttonText = "Select",
   onPress,
 }: Props) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   return (
     <View style={[styles.card, featured && styles.featuredCard]}>
       <Text style={styles.title}>{title}</Text>
@@ -33,48 +38,78 @@ export default function PricingCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 12,
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: theme.colors.card,
 
-  featuredCard: {
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-  },
+      borderRadius: 22,
 
-  title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
+      padding: 20,
 
-  price: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: COLORS.primary,
-    marginTop: 8,
-  },
+      marginBottom: 14,
 
-  description: {
-    marginTop: 8,
-    color: COLORS.muted,
-    lineHeight: 22,
-  },
+      borderWidth: 1,
+      borderColor: theme.colors.border,
 
-  button: {
-    backgroundColor: COLORS.primary,
-    padding: 12,
-    borderRadius: 12,
-    marginTop: 14,
-    alignItems: "center",
-  },
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      shadowOffset: {
+        width: 0,
+        height: 5,
+      },
 
-  buttonText: {
-    color: COLORS.white,
-    fontWeight: "700",
-  },
-});
+      elevation: 4,
+    },
+
+    featuredCard: {
+      borderWidth: 2,
+      borderColor: theme.colors.primary,
+    },
+
+    title: {
+      fontSize: 18,
+      fontWeight: "800",
+      color: theme.colors.text,
+    },
+
+    price: {
+      marginTop: 10,
+
+      fontSize: 24,
+      fontWeight: "800",
+
+      color: theme.colors.primary,
+    },
+
+    description: {
+      marginTop: 10,
+
+      color: theme.colors.muted,
+
+      fontSize: 14,
+
+      lineHeight: 22,
+    },
+
+    button: {
+      marginTop: 18,
+
+      height: 48,
+
+      borderRadius: 14,
+
+      backgroundColor: theme.colors.primary,
+
+      justifyContent: "center",
+      alignItems: "center",
+    },
+
+    buttonText: {
+      color: theme.colors.white,
+      fontWeight: "800",
+      fontSize: 15,
+    },
+  });
+}

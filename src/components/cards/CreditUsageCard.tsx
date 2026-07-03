@@ -1,5 +1,7 @@
-import { COLORS } from "@/constants";
 import { StyleSheet, Text, View } from "react-native";
+
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 
 type Props = {
   requiredCredits: number;
@@ -12,6 +14,9 @@ export default function CreditUsageCard({
   availableCredits,
   hourlyUsage,
 }: Props) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   const enoughCredits = availableCredits >= requiredCredits;
 
   return (
@@ -24,41 +29,93 @@ export default function CreditUsageCard({
 
       <Text style={styles.item}>Estimated Usage: {hourlyUsage} Credits/hr</Text>
 
-      <Text
+      <View
         style={[
-          styles.status,
-          {
-            color: enoughCredits ? COLORS.primary : COLORS.danger,
-          },
+          styles.statusBadge,
+          enoughCredits ? styles.successBadge : styles.dangerBadge,
         ]}
       >
-        {enoughCredits ? "✓ Ready To Deploy" : "⚠ Not Enough Credits"}
-      </Text>
+        <Text
+          style={[
+            styles.statusText,
+            {
+              color: enoughCredits ? theme.colors.success : theme.colors.danger,
+            },
+          ]}
+        >
+          {enoughCredits ? "✓ Ready To Deploy" : "⚠ Not Enough Credits"}
+        </Text>
+      </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.white,
-    margin: 16,
-    padding: 18,
-    borderRadius: 18,
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: theme.colors.card,
 
-  title: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
+      margin: 16,
 
-  item: {
-    marginBottom: 8,
-    color: COLORS.subtitleText,
-  },
+      padding: 20,
 
-  status: {
-    marginTop: 12,
-    fontWeight: "700",
-  },
-});
+      borderRadius: 22,
+
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      shadowOffset: {
+        width: 0,
+        height: 5,
+      },
+
+      elevation: 4,
+    },
+
+    title: {
+      color: theme.colors.text,
+
+      fontSize: 17,
+      fontWeight: "800",
+
+      marginBottom: 16,
+    },
+
+    item: {
+      color: theme.colors.secondaryText,
+
+      fontSize: 14,
+
+      marginBottom: 10,
+
+      lineHeight: 20,
+    },
+
+    statusBadge: {
+      marginTop: 14,
+
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+
+      borderRadius: 14,
+
+      alignSelf: "flex-start",
+    },
+
+    successBadge: {
+      backgroundColor: theme.colors.successLight,
+    },
+
+    dangerBadge: {
+      backgroundColor: theme.colors.dangerLight,
+    },
+
+    statusText: {
+      fontWeight: "800",
+      fontSize: 14,
+    },
+  });
+}

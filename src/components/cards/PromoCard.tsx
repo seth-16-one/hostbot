@@ -1,4 +1,3 @@
-import { COLORS } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import {
@@ -8,6 +7,9 @@ import {
   Text,
   View,
 } from "react-native";
+
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 
 type PromoCardProps = {
   title: string;
@@ -24,6 +26,9 @@ export default function PromoCard({
   action,
   link,
 }: PromoCardProps) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   return (
     <ImageBackground
       source={{ uri: image }}
@@ -43,55 +48,79 @@ export default function PromoCard({
         >
           <Text style={styles.buttonText}>{action}</Text>
 
-          <Ionicons name="arrow-forward" size={16} color={COLORS.white} />
+          <Ionicons name="arrow-forward" size={16} color={theme.colors.white} />
         </Pressable>
       </View>
     </ImageBackground>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    width: 280,
-    height: 170,
-    marginRight: 14,
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    card: {
+      width: 280,
+      height: 170,
+      marginRight: 14,
+    },
 
-  image: {
-    borderRadius: 20,
-  },
+    image: {
+      borderRadius: 22,
+    },
 
-  overlay: {
-    flex: 1,
-    borderRadius: 20,
-    padding: 18,
-    justifyContent: "space-between",
-    backgroundColor: "rgba(0,0,0,0.45)",
-  },
+    overlay: {
+      flex: 1,
 
-  title: {
-    color: COLORS.white,
-    fontSize: 22,
-    fontWeight: "700",
-  },
+      borderRadius: 22,
 
-  description: {
-    color: COLORS.white,
-    fontSize: 14,
-    marginTop: 8,
-    lineHeight: 20,
-  },
+      padding: 20,
 
-  button: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    gap: 6,
-  },
+      justifyContent: "space-between",
 
-  buttonText: {
-    color: COLORS.white,
-    fontWeight: "700",
-    fontSize: 15,
-  },
-});
+      backgroundColor: theme.colors.overlay,
+    },
+
+    title: {
+      color: theme.colors.white,
+
+      fontSize: 22,
+
+      fontWeight: "800",
+    },
+
+    description: {
+      marginTop: 8,
+
+      color: theme.colors.white,
+
+      fontSize: 14,
+
+      lineHeight: 21,
+    },
+
+    button: {
+      flexDirection: "row",
+
+      alignItems: "center",
+
+      alignSelf: "flex-start",
+
+      gap: 6,
+
+      backgroundColor: "rgba(255,255,255,0.15)",
+
+      paddingHorizontal: 14,
+
+      paddingVertical: 10,
+
+      borderRadius: 14,
+    },
+
+    buttonText: {
+      color: theme.colors.white,
+
+      fontWeight: "800",
+
+      fontSize: 14,
+    },
+  });
+}

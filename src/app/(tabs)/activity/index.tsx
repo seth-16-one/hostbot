@@ -1,30 +1,62 @@
 import ActivityCard from "@/components/cards/ActivityCard";
 import PageHeader from "@/components/layout/PageHeader";
 import Screen from "@/components/layout/Screen";
-import { COLORS } from "@/constants";
 import { system } from "@/data";
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
+import { router } from "expo-router";
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 const activities = system.activity;
 
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function ActivityScreen() {
+  const { theme } = useTheme();
+
+  const styles = createStyles(theme);
+
   const [selectedFilter, setSelectedFilter] = useState("All");
   const filteredActivities =
     selectedFilter === "All"
       ? activities
       : activities.filter((item) => item.category === selectedFilter);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+
+      // Future:
+      // await activityService.getActivities();
+
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const todayCount = activities.length;
   const weekCount = activities.length;
   return (
-    <Screen backgroundColor={COLORS.primary}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <Screen backgroundColor={theme.colors.primary}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <PageHeader
           title="Activity"
           subtitle="Recent account activity"
-          showSearch={true}
+          showSearch
           searchPlaceholder="Search Activity..."
         />
 
@@ -84,6 +116,14 @@ export default function ActivityScreen() {
                 description={activity.description}
                 time={activity.time}
                 type={activity.type}
+                onPress={() =>
+                  router.push({
+                    pathname: "/activity/[id]",
+                    params: {
+                      id: String(activity.id),
+                    },
+                  } as any)
+                }
               />
             ))
           )}
@@ -93,89 +133,107 @@ export default function ActivityScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
 
-  statsRow: {
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: 20,
-    marginTop: 20,
-  },
+    statsRow: {
+      flexDirection: "row",
+      gap: 12,
+      paddingHorizontal: 20,
+      marginTop: 20,
+    },
 
-  statCard: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    borderRadius: 18,
-    padding: 18,
-    alignItems: "center",
-    elevation: 2,
-  },
+    statCard: {
+      flex: 1,
+      backgroundColor: theme.colors.card,
+      borderRadius: 18,
+      padding: 18,
+      alignItems: "center",
 
-  statValue: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
+      borderWidth: 1,
+      borderColor: theme.colors.border,
 
-  statLabel: {
-    color: COLORS.muted,
-    marginTop: 4,
-  },
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      shadowOffset: {
+        width: 0,
+        height: 3,
+      },
 
-  filterContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    gap: 10,
-  },
+      elevation: 3,
+    },
 
-  activeChip: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
+    statValue: {
+      fontSize: 24,
+      fontWeight: "800",
+      color: theme.colors.text,
+    },
 
-  activeChipText: {
-    color: COLORS.white,
-    fontWeight: "600",
-  },
+    statLabel: {
+      marginTop: 4,
+      color: theme.colors.muted,
+      fontWeight: "600",
+    },
 
-  chip: {
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 20,
-    elevation: 1,
-  },
+    filterContainer: {
+      paddingHorizontal: 20,
+      paddingVertical: 18,
+      gap: 10,
+    },
 
-  chipText: {
-    color: COLORS.secondaryText,
-    fontWeight: "500",
-  },
+    activeChip: {
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderRadius: 20,
+    },
 
-  content: {
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-  },
+    activeChipText: {
+      color: theme.colors.white,
+      fontWeight: "700",
+    },
 
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 16,
-    color: COLORS.text,
-  },
+    chip: {
+      backgroundColor: theme.colors.card,
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderRadius: 20,
 
-  emptyContainer: {
-    alignItems: "center",
-    paddingVertical: 40,
-  },
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
 
-  emptyText: {
-    color: COLORS.muted,
-    fontSize: 15,
-  },
-});
+    chipText: {
+      color: theme.colors.secondaryText,
+      fontWeight: "600",
+    },
+
+    content: {
+      paddingHorizontal: 20,
+      paddingBottom: 30,
+    },
+
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: "800",
+      marginBottom: 16,
+      color: theme.colors.text,
+    },
+
+    emptyContainer: {
+      alignItems: "center",
+      paddingVertical: 40,
+    },
+
+    emptyText: {
+      color: theme.colors.muted,
+      fontSize: 15,
+      fontWeight: "600",
+    },
+  });
+}

@@ -7,7 +7,9 @@ type Props = {
 };
 
 export default function CountryPicker({ value, onChange }: Props) {
-  const countries = Country.getAllCountries().map((country) => country.name);
+  const countries = Country.getAllCountries()
+    .map((country) => country.name)
+    .sort();
 
   return (
     <Select

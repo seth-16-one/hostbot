@@ -13,24 +13,30 @@ export default function AuthFooter({ text, action, onPress }: Props) {
   return (
     <View style={styles.container}>
       <Text
-        style={{
-          color: theme.colors.subtitleText,
-        }}
+        style={[
+          styles.text,
+          {
+            color: theme.colors.subtitleText,
+          },
+        ]}
       >
         {text}
       </Text>
 
       <Pressable onPress={onPress}>
-        <Text
-          style={[
-            styles.link,
-            {
-              color: theme.colors.primary,
-            },
-          ]}
-        >
-          {action}
-        </Text>
+        {({ pressed }) => (
+          <Text
+            style={[
+              styles.link,
+              {
+                color: theme.colors.primary,
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+          >
+            {action}
+          </Text>
+        )}
       </Pressable>
     </View>
   );
@@ -39,12 +45,23 @@ export default function AuthFooter({ text, action, onPress }: Props) {
 const styles = StyleSheet.create({
   container: {
     marginTop: 24,
+
     flexDirection: "row",
     justifyContent: "center",
-    gap: 5,
+    alignItems: "center",
+
+    gap: 6,
+  },
+
+  text: {
+    fontSize: 14,
+
+    fontWeight: "500",
   },
 
   link: {
-    fontWeight: "700",
+    fontSize: 14,
+
+    fontWeight: "800",
   },
 });

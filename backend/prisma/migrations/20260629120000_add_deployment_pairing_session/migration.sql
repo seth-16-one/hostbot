@@ -1,0 +1,4 @@
+ALTER TABLE "Deployment"
+ADD COLUMN "pairingCode" TEXT,
+ADD COLUMN "qr" TEXT,
+ADD COLUMN "expiresAt" TIMESTAMP(3);

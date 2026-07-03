@@ -1,17 +1,27 @@
-import { COLORS } from "@/constants";
+import { useTheme } from "@/theme";
+import { ReactNode } from "react";
 import { ScrollView } from "react-native";
 
-export default function Screen({ children }: any) {
+type Props = {
+  children: ReactNode;
+  backgroundColor?: string;
+};
+
+export default function Screen({ children, backgroundColor }: Props) {
+  const { theme } = useTheme();
+
   return (
     <ScrollView
       style={{
         flex: 1,
-        backgroundColor: COLORS.background,
+        backgroundColor: backgroundColor ?? theme.colors.background,
       }}
       contentContainerStyle={{
         flexGrow: 1,
       }}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
+      showsVerticalScrollIndicator={false}
     >
       {children}
     </ScrollView>

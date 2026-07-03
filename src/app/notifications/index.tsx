@@ -53,7 +53,7 @@ export default function NotificationsScreen() {
               <Ionicons
                 name="chevron-forward"
                 size={20}
-                color="COLORS.tabInactive"
+                color={COLORS.tabInactive}
               />
             </Pressable>
           ))}

@@ -128,7 +128,7 @@ function MenuItem({
         </View>
       </View>
 
-      <Ionicons name="chevron-forward" size={20} color="COLORS.tabInactive" />
+      <Ionicons name="chevron-forward" size={20} color={COLORS.tabInactive} />
     </Pressable>
   );
 }

@@ -2,32 +2,32 @@ export const COLORS = {
   // =========================================
   // BRAND
   // =========================================
-  primary: "#22c55e",
-  primaryDark: "#16a34a",
+  primary: "#22C55E",
+  primaryDark: "#16A34A",
 
   // =========================================
   // BACKGROUNDS
   // =========================================
-  background: "#f8fafc",
-  card: "#ffffff",
-  surface: "#f1f5f9",
+  background: "#F8FAFC",
+  card: "#FFFFFF",
+  surface: "#F1F5F9",
 
   // =========================================
   // TEXT
   // =========================================
-  text: "#0f172a",
+  text: "#0F172A",
   secondaryText: "#334155",
   subtitleText: "#475569",
-  muted: "#64748b",
+  muted: "#64748B",
 
-  white: "#ffffff",
+  white: "#FFFFFF",
   black: "#000000",
 
   // =========================================
   // SUCCESS
   // =========================================
-  success: "#16a34a",
-  successDark: "#15803d",
+  success: "#16A34A",
+  successDark: "#15803D",
   successDeep: "#166534",
 
   successBg: "#DCFCE7",
@@ -36,7 +36,7 @@ export const COLORS = {
   // =========================================
   // DANGER
   // =========================================
-  danger: "#dc2626",
+  danger: "#DC2626",
   dangerDeep: "#991B1B",
 
   dangerBg: "#FEE2E2",
@@ -46,13 +46,14 @@ export const COLORS = {
   // =========================================
   // WARNING
   // =========================================
-  warning: "#f59e0b",
+  warning: "#F59E0B",
   warningBg: "#FEF3C7",
+  warningLight: "#FFFBEB",
 
   // =========================================
   // INFO
   // =========================================
-  info: "#3b82f6",
+  info: "#3B82F6",
   infoDark: "#1D4ED8",
 
   infoBg: "#DBEAFE",
@@ -60,7 +61,7 @@ export const COLORS = {
   infoBorder: "#BFDBFE",
 
   // =========================================
-  // SPECIAL COLORS
+  // SPECIAL
   // =========================================
   wallet: "#EA580C",
   purple: "#8B5CF6",
@@ -68,35 +69,51 @@ export const COLORS = {
   // =========================================
   // BORDERS
   // =========================================
-  border: "#e2e8f0",
+  border: "#E2E8F0",
+  divider: "#E5E7EB",
 
   // =========================================
   // HEADER
   // =========================================
-  headerText: "#ffffff",
+  headerText: "#FFFFFF",
   headerSubtitle: "rgba(255,255,255,0.85)",
 
   // =========================================
   // TAB BAR
   // =========================================
-  tabActive: "#22c55e",
-  tabInactive: "#94a3b8",
+  tabActive: "#22C55E",
+  tabInactive: "#94A3B8",
 
   // =========================================
   // ICONS
   // =========================================
-  icon: "#64748b",
-  iconLight: "#94a3b8",
+  icon: "#64748B",
+  iconLight: "#94A3B8",
 
   // =========================================
   // EFFECTS
   // =========================================
-  overlay: "rgba(0,0,0,0.4)",
+  overlay: "rgba(0,0,0,0.40)",
+  backdrop: "rgba(0,0,0,0.55)",
   glass: "rgba(255,255,255,0.15)",
   shadow: "#000000",
+  ripple: "rgba(34,197,94,0.12)",
+  focus: "#22C55E",
+  disabled: "#CBD5E1",
 
   // =========================================
   // MISC
   // =========================================
   transparent: "transparent",
+
+  // =========================================
+  // AUTH
+  // =========================================
+  authBackground: "#EEF8F1",
+  authCard: "#63DA87",
+  authInput: "#1F2937",
+  authBorder: "#374151",
+  authPlaceholder: "#9CA3AF",
+  authButton: "#22C55E",
+  authButtonPressed: "#16A34A",
 };

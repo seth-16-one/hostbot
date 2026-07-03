@@ -1,16 +1,14 @@
+import { useTheme } from "@/theme";
 import { ReactNode } from "react";
 import {
-  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-
-import { useTheme } from "@/theme";
-import { Ionicons } from "@expo/vector-icons";
 
 type Props = {
   children: ReactNode;
@@ -22,23 +20,23 @@ export default function AuthLayout({ children, title, subtitle }: Props) {
   const { theme } = useTheme();
 
   return (
-    <ImageBackground
-      source={require("@/assets/images/authbackground.jpg")}
-      resizeMode="cover"
-      style={styles.background}
+    <View
+      style={[
+        styles.background,
+        {
+          backgroundColor: theme.colors.background,
+        },
+      ]}
     >
-      <View
-        style={[
-          styles.overlay,
-          {
-            backgroundColor: theme.dark
-              ? "rgba(0,0,0,0.70)"
-              : "rgba(255,255,255,0.82)",
-          },
-        ]}
-      >
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle={theme.dark ? "light-content" : "dark-content"}
+      />
+
+      <View style={styles.overlay}>
         <KeyboardAvoidingView
-          style={{ flex: 1 }}
+          style={styles.flex}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <ScrollView
@@ -46,28 +44,14 @@ export default function AuthLayout({ children, title, subtitle }: Props) {
             keyboardDismissMode="interactive"
             automaticallyAdjustKeyboardInsets
             contentContainerStyle={styles.scroll}
+            showsVerticalScrollIndicator={false}
           >
             <View style={styles.logoContainer}>
-              <View
-                style={[
-                  styles.logoCircle,
-                  {
-                    backgroundColor: theme.colors.primary,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name="hardware-chip-outline"
-                  size={40}
-                  color="white"
-                />
-              </View>
-
               <Text
                 style={[
                   styles.brand,
                   {
-                    color: theme.colors.text,
+                    color: theme.colors.primary,
                   },
                 ]}
               >
@@ -92,6 +76,10 @@ export default function AuthLayout({ children, title, subtitle }: Props) {
                 {
                   backgroundColor: theme.colors.card,
                   borderColor: theme.colors.border,
+
+                  shadowColor: theme.colors.shadow,
+
+                  shadowOpacity: theme.dark ? 0.25 : 0.08,
                 },
               ]}
             >
@@ -111,7 +99,7 @@ export default function AuthLayout({ children, title, subtitle }: Props) {
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
-    </ImageBackground>
+    </View>
   );
 }
 
@@ -124,48 +112,68 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  flex: {
+    flex: 1,
+  },
+
   scroll: {
     flexGrow: 1,
-    justifyContent: "flex-start",
-    padding: 24,
+
+    justifyContent: "center",
+
+    paddingHorizontal: 24,
+
+    paddingVertical: 30,
   },
 
   logoContainer: {
     alignItems: "center",
-    marginBottom: 24,
-  },
 
-  logoCircle: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 18,
+    marginBottom: 38,
   },
 
   brand: {
-    fontSize: 34,
-    fontWeight: "800",
+    fontSize: 42,
+
+    fontWeight: "900",
+
+    letterSpacing: 0.5,
   },
 
   subtitle: {
-    marginTop: 8,
+    marginTop: 10,
+
     textAlign: "center",
+
     fontSize: 15,
-    lineHeight: 22,
-    paddingHorizontal: 30,
+
+    lineHeight: 24,
+
+    paddingHorizontal: 40,
   },
 
   card: {
-    borderRadius: 24,
+    borderRadius: 28,
+
     padding: 24,
+
     borderWidth: 1,
+
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+
+    shadowRadius: 20,
+
+    elevation: 10,
   },
 
   title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 20,
+    fontSize: 24,
+
+    fontWeight: "800",
+
+    marginBottom: 28,
   },
 });

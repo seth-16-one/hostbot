@@ -44,12 +44,14 @@ export class ApiError extends Error {
 }
 
 function getFriendlyMessage(status: number, payload: any) {
-  if (payload?.message) return payload.message;
   if (status === 0) return "Unable to connect. Check your internet connection.";
   if (status === 401) return "Your session has expired. Please sign in again.";
   if (status === 408) return "The request timed out. Please try again.";
+  if (status === 400) return payload?.message || payload?.error?.message || "Please check your input and try again.";
+  if (status === 404) return "The requested item could not be found.";
   if (status >= 500)
     return "The server is unavailable. Please try again later.";
+  if (payload?.message) return payload.message;
   return "Request failed. Please try again.";
 }
 

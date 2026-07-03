@@ -1,3 +1,4 @@
+import { useTheme } from "@/theme";
 import { ReactNode } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -7,11 +8,13 @@ type ScreenProps = {
 };
 
 export default function Screen({ children, backgroundColor }: ScreenProps) {
+  const { theme } = useTheme();
+
   return (
     <SafeAreaView
       style={{
         flex: 1,
-        backgroundColor,
+        backgroundColor: backgroundColor ?? theme.colors.background,
       }}
       edges={["top"]}
     >

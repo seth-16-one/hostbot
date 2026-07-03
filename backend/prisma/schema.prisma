@@ -8,114 +8,96 @@ datasource db {
 }
 
 model User {
-  id            String  @id @default(cuid())
-  firstName     String
-  lastName      String
-  email         String  @unique
-  phone         String?
-  passwordHash  String
-  emailVerified Boolean @default(false)
+  id                         String        @id @default(cuid())
+  firstName                  String
+  lastName                   String
+  email                      String        @unique
+  phone                      String?
+  passwordHash               String
+  emailVerified              Boolean       @default(false)
+  createdAt                  DateTime      @default(now())
+  updatedAt                  DateTime      @updatedAt
+// Email Verification
+emailVerificationOtp       String?
+emailVerificationExpiresAt DateTime?
 
-  deployments  Deployment[]
-  wallet       Wallet?
-  transactions Transaction[]
-  recharges    Recharge[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// Password Reset
+resetPasswordOtp           String?
+resetPasswordExpiresAt     DateTime?
+  deployments                Deployment[]
+  recharges                  Recharge[]
+  transactions               Transaction[]
+  wallet                     Wallet?
 }
 
 model Bot {
-  id Int @id @default(autoincrement())
-
-  name            String
-  description     String?
-  longDescription String?
-
-  icon     String?
-  category String?
-  version  String?
-
-  rating   Float   @default(0)
-  featured Boolean @default(false)
-
-  minimumCreditsRequired Int @default(0)
-  runCreditsPerHour      Int @default(0)
-
-  status String @default("active")
-
-  totalDeployments Int @default(0)
-
-  lastUpdated String?
-
-  features     String[]
-  requirements String[]
-
-  deployments Deployment[]
-
-  createdAt DateTime @default(now())
+  id                     Int          @id @default(autoincrement())
+  name                   String
+  description            String?
+  category               String?
+  version                String?
+  createdAt              DateTime     @default(now())
+  featured               Boolean      @default(false)
+  features               String[]
+  icon                   String?
+  lastUpdated            String?
+  longDescription        String?
+  minimumCreditsRequired Int          @default(0)
+  rating                 Float        @default(0)
+  requirements           String[]
+  runCreditsPerHour      Int          @default(0)
+  status                 String       @default("active")
+  totalDeployments       Int          @default(0)
+  deployments            Deployment[]
 }
 
 model Deployment {
-  id String @id @default(cuid())
-
-  userId String
-  botId  Int
-
+  id          String   @id @default(cuid())
+  userId      String
+  botId       Int
   botName     String
   ownerNumber String?
   prefix      String?
   sessionName String?
-  status      String  @default("queued")
-
-  user User @relation(fields: [userId], references: [id])
-  bot  Bot  @relation(fields: [botId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status      String   @default("queued")
+  pairingSessionId String?
+  pairingCode String?
+  qr          String?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  bot         Bot      @relation(fields: [botId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model Wallet {
-  id String @id @default(cuid())
-
-  userId  String @unique
-  credits Int    @default(0)
-
-  user User @relation(fields: [userId], references: [id])
-
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  credits   Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Transaction {
-  id String @id @default(cuid())
-
-  userId String
-
-  type   String
-  status String
-  amount Int
-
+  id          String   @id @default(cuid())
+  userId      String
+  type        String
+  status      String
+  amount      Int
   description String?
   reference   String?
-
-  user User @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model Recharge {
-  id String @id @default(cuid())
-
-  userId String
-
-  amount  Int
-  credits Int
-
+  id            String   @id @default(cuid())
+  userId        String
+  amount        Int
+  credits       Int
   paymentMethod String
-  status        String @default("pending")
-
-  user User @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
 }

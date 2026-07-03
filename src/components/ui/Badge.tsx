@@ -1,23 +1,50 @@
-import { Text, View } from "react-native";
+import { useTheme } from "@/theme";
+import { StyleSheet, Text, View } from "react-native";
 
-export default function Badge({ text, color }: any) {
+type BadgeProps = {
+  text: string;
+  color?: string;
+};
+
+export default function Badge({ text, color }: BadgeProps) {
+  const { theme } = useTheme();
+
   return (
     <View
-      style={{
-        backgroundColor: color,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 999,
-      }}
+      style={[
+        styles.badge,
+        {
+          backgroundColor: color ?? theme.colors.primary,
+        },
+      ]}
     >
       <Text
-        style={{
-          color: "#fff",
-          fontWeight: "600",
-        }}
+        style={[
+          styles.text,
+          {
+            color: theme.colors.white,
+          },
+        ]}
       >
         {text}
       </Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    alignSelf: "flex-start",
+
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+
+    borderRadius: 999,
+  },
+
+  text: {
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+});

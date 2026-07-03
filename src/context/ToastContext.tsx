@@ -2,8 +2,14 @@ import { createContext, useContext } from "react";
 
 export type ToastType = "success" | "error" | "warning" | "info";
 
+export type ToastData = {
+  title: string;
+  message: string;
+  type?: ToastType;
+};
+
 type ToastContextType = {
-  showToast: (message: string, type?: ToastType) => void;
+  showToast: (toast: ToastData) => void;
 };
 
 export const ToastContext = createContext<ToastContextType | null>(null);

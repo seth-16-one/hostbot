@@ -1,3 +1,6 @@
+import Divider from "@/components/ui/Divider";
+import SocialButton from "@/components/ui/SocialButton";
+import { googleService } from "@/services/auth/google.service";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
@@ -6,21 +9,24 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import AuthLayout from "@/components/auth/AuthLayout";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import PhoneInput from "@/components/ui/PhoneInput";
 import StatusBanner from "@/components/ui/StatusBanner";
-
 import { useAuthStore } from "@/store/auth";
 import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RegisterScreen() {
   const { theme } = useTheme();
+  const styles = createStyles(theme);
 
   const register = useAuthStore((state) => state.register);
   const isLoading = useAuthStore((state) => state.isLoading);
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const googleLogin = useAuthStore((state) => state.googleLogin);
+
+  const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,8 +35,11 @@ export default function RegisterScreen() {
   const [error, setError] = useState("");
 
   function validate() {
-    if (!firstName.trim()) return "First name is required.";
-    if (!lastName.trim()) return "Last name is required.";
+    const names = fullName.trim().split(/\s+/);
+
+    if (names.length < 2) {
+      return "Please enter your first and last name.";
+    }
     if (!phone.trim()) return "Phone number is required.";
     if (!emailPattern.test(email.trim())) return "Enter a valid email.";
     if (password.length < 8) return "Password must be at least 8 characters.";
@@ -40,6 +49,11 @@ export default function RegisterScreen() {
   }
 
   async function handleRegister() {
+    const names = fullName.trim().split(/\s+/);
+
+    const firstName = names[0];
+    const lastName = names.slice(1).join(" ");
+
     const validation = validate();
 
     if (validation) {
@@ -57,6 +71,23 @@ export default function RegisterScreen() {
         email: email.trim().toLowerCase(),
         password,
       });
+
+      router.replace({
+        pathname: "/(auth)/verify-otp",
+        params: {
+          email: email.trim().toLowerCase(),
+          type: "email",
+        },
+      });
+    } catch (err: any) {
+      setError(err.message);
+    }
+  }
+
+  async function handleGoogle() {
+    try {
+      const session = await googleService.login();
+      await googleLogin(session);
     } catch (err: any) {
       setError(err.message);
     }
@@ -80,27 +111,27 @@ export default function RegisterScreen() {
           />
         ) : null}
 
-        <Input
-          label="First Name"
-          value={firstName}
-          onChangeText={setFirstName}
-          placeholder="Anonumous"
-        />
+        <>
+          <Divider text="CONTINUE WITH" />
+
+          <SocialButton
+            title="Continue with Google"
+            icon="logo-google"
+            onPress={handleGoogle}
+          />
+
+          <Divider text="OR" />
+        </>
 
         <Input
-          label="Last Name"
-          value={lastName}
-          onChangeText={setLastName}
-          placeholder="Seth"
+          label="Full Name"
+          leftIcon="person-outline"
+          value={fullName}
+          onChangeText={setFullName}
+          placeholder="Enter your full name"
         />
 
-        <Input
-          label="Phone Number"
-          value={phone}
-          onChangeText={setPhone}
-          keyboardType="phone-pad"
-          placeholder="+254700000000"
-        />
+        <PhoneInput value={phone} onChange={setPhone} />
 
         <Input
           label="Email Address"
@@ -130,30 +161,37 @@ export default function RegisterScreen() {
         <Button
           title="Create Account"
           loading={isLoading}
+          disabled={
+            !fullName.trim() ||
+            !phone.trim() ||
+            !email.trim() ||
+            !password ||
+            !confirmPassword ||
+            isLoading
+          }
           onPress={handleRegister}
         />
 
         <Pressable onPress={() => router.replace("/(auth)/login")}>
-          <Text
-            style={[
-              styles.login,
-              {
-                color: theme.colors.primary,
-              },
-            ]}
-          >
-            Already have an account? Login
-          </Text>
+          <Text style={styles.login}>Already have an account? Login</Text>
         </Pressable>
       </AuthLayout>
     </KeyboardAwareScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  login: {
-    marginTop: 20,
-    textAlign: "center",
-    fontWeight: "700",
-  },
-});
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    login: {
+      marginTop: 24,
+
+      textAlign: "center",
+
+      color: theme.colors.primary,
+
+      fontSize: 15,
+
+      fontWeight: "700",
+    },
+  });
+}

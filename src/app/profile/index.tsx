@@ -97,7 +97,7 @@ function MenuItem({ icon, title, onPress }: any) {
         <Text style={styles.menuTitle}>{title}</Text>
       </View>
 
-      <Ionicons name="chevron-forward" size={20} color="COLORS.tabInactive" />
+      <Ionicons name="chevron-forward" size={20} color={COLORS.tabInactive} />
     </Pressable>
   );
 }
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   },
 
   userHandle: {
-    color: "COLORS.tabInactive",
+    color: COLORS.tabInactive,
     marginTop: 2,
   },
 
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   },
 
   planBadge: {
-    backgroundColor: "COLORS.successBg",
+    backgroundColor: COLORS.successBg,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,

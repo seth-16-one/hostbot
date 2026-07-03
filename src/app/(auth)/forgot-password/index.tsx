@@ -6,6 +6,7 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import StatusBanner from "@/components/ui/StatusBanner";
+import type { AppTheme } from "@/theme/light";
 
 import { authService } from "@/services/auth/auth.service";
 import { useTheme } from "@/theme";
@@ -14,6 +15,7 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ForgotPasswordScreen() {
   const { theme } = useTheme();
+  const styles = createStyles(theme);
 
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,9 +33,17 @@ export default function ForgotPasswordScreen() {
       setLoading(true);
       setError("");
 
-      await authService.forgotPassword(email.trim().toLowerCase());
+      const normalizedEmail = email.trim().toLowerCase();
 
-      setSuccess(true);
+      await authService.forgotPassword(normalizedEmail);
+
+      router.replace({
+        pathname: "/(auth)/verify-otp",
+        params: {
+          email: normalizedEmail,
+          type: "password",
+        },
+      });
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -67,28 +77,32 @@ export default function ForgotPasswordScreen() {
         placeholder="you@example.com"
       />
 
-      <Button title="Send Reset Link" loading={loading} onPress={handleReset} />
+      <Button
+        title="Send Reset Link"
+        loading={loading}
+        disabled={!email.trim() || loading}
+        onPress={handleReset}
+      />
 
       <Pressable onPress={() => router.replace("/(auth)/login")}>
-        <Text
-          style={[
-            styles.link,
-            {
-              color: theme.colors.primary,
-            },
-          ]}
-        >
-          Back to Login
-        </Text>
+        <Text style={styles.link}>Back to Login</Text>
       </Pressable>
     </AuthLayout>
   );
 }
 
-const styles = StyleSheet.create({
-  link: {
-    marginTop: 20,
-    textAlign: "center",
-    fontWeight: "700",
-  },
-});
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    link: {
+      marginTop: 24,
+
+      textAlign: "center",
+
+      fontSize: 15,
+
+      fontWeight: "700",
+
+      color: theme.colors.primary,
+    },
+  });
+}

@@ -1,6 +1,8 @@
-import { COLORS } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
+
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 
 type Props = {
   title: string;
@@ -10,6 +12,9 @@ type Props = {
 };
 
 export default function UsageCard({ title, value, icon, color }: Props) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.card}>
       <View
@@ -30,33 +35,56 @@ export default function UsageCard({ title, value, icon, color }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    padding: 16,
-    borderRadius: 18,
-    elevation: 2,
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    card: {
+      flex: 1,
 
-  iconContainer: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
+      backgroundColor: theme.colors.card,
 
-  value: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
+      padding: 18,
 
-  title: {
-    marginTop: 4,
-    fontSize: 13,
-    color: COLORS.muted,
-  },
-});
+      borderRadius: 20,
+
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      shadowOffset: {
+        width: 0,
+        height: 5,
+      },
+
+      elevation: 4,
+    },
+
+    iconContainer: {
+      width: 48,
+      height: 48,
+
+      borderRadius: 24,
+
+      justifyContent: "center",
+      alignItems: "center",
+
+      marginBottom: 12,
+    },
+
+    value: {
+      fontSize: 24,
+      fontWeight: "800",
+
+      color: theme.colors.text,
+    },
+
+    title: {
+      marginTop: 6,
+
+      fontSize: 13,
+
+      color: theme.colors.muted,
+    },
+  });
+}

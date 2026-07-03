@@ -1,4 +1,5 @@
-import { COLORS } from "@/constants";
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 import { ActivityIndicator, Modal, StyleSheet, Text, View } from "react-native";
 
 type Props = {
@@ -12,11 +13,19 @@ export default function LoadingOverlay({
   title = "Please Wait",
   message = "Processing your request...",
 }: Props) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+    >
       <View style={styles.overlay}>
         <View style={styles.container}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
 
           <Text style={styles.title}>{title}</Text>
 
@@ -27,39 +36,64 @@ export default function LoadingOverlay({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    overlay: {
+      flex: 1,
 
-  container: {
-    width: "100%",
-    maxWidth: 320,
+      justifyContent: "center",
+      alignItems: "center",
 
-    backgroundColor: COLORS.white,
+      padding: 24,
 
-    borderRadius: 24,
+      backgroundColor: "rgba(0,0,0,0.5)",
+    },
 
-    padding: 24,
+    container: {
+      width: "100%",
+      maxWidth: 320,
 
-    alignItems: "center",
-  },
+      backgroundColor: theme.colors.card,
 
-  title: {
-    marginTop: 16,
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
+      borderRadius: 24,
 
-  message: {
-    marginTop: 8,
-    textAlign: "center",
-    color: COLORS.muted,
-    lineHeight: 22,
-  },
-});
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+
+      paddingHorizontal: 24,
+      paddingVertical: 28,
+
+      alignItems: "center",
+
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.15,
+      shadowRadius: 18,
+      shadowOffset: {
+        width: 0,
+        height: 8,
+      },
+
+      elevation: 12,
+    },
+
+    title: {
+      marginTop: 18,
+
+      color: theme.colors.text,
+
+      fontSize: 20,
+      fontWeight: "800",
+    },
+
+    message: {
+      marginTop: 10,
+
+      color: theme.colors.secondaryText,
+
+      fontSize: 15,
+      lineHeight: 24,
+
+      textAlign: "center",
+    },
+  });
+}

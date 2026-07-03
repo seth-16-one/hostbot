@@ -5,9 +5,12 @@ export type DeploymentStatus =
   | "deploying"
   | "online"
   | "offline"
+  | "stopped"
+  | "maintenance"
   | "failed"
   | "expired"
-  | "suspended";
+  | "suspended"
+  | "deleted";
 
 export interface PairingSession {
   id: string;
@@ -16,6 +19,9 @@ export interface PairingSession {
   qrValue: string;
   expiresAt: string;
   createdAt: string;
+  status?: "waiting" | "connected" | "expired" | "closed" | DeploymentStatus;
+  connectedAt?: string | null;
+  phone?: string;
 }
 
 export interface Deployment {

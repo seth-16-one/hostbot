@@ -1,6 +1,8 @@
-import { COLORS, SHADOWS } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 
 type MarketplaceCardProps = {
   icon: any;
@@ -25,12 +27,14 @@ export default function MarketplaceCard({
   status,
   onPress,
 }: MarketplaceCardProps) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.card}>
-      {/* Top Section */}
       <View style={styles.topRow}>
         <View style={styles.iconContainer}>
-          <Ionicons name={icon} size={24} color={COLORS.success} />
+          <Ionicons name={icon} size={24} color={theme.colors.success} />
         </View>
 
         <View style={styles.titleRow}>
@@ -40,12 +44,10 @@ export default function MarketplaceCard({
         </View>
       </View>
 
-      {/* Description */}
       <Text numberOfLines={2} style={styles.description}>
         {description}
       </Text>
 
-      {/* Featured */}
       {featured && (
         <View style={styles.popularBadge}>
           <Ionicons name="flame" size={12} color="#F97316" />
@@ -54,14 +56,12 @@ export default function MarketplaceCard({
         </View>
       )}
 
-      {/* Maintenance */}
       {status === "maintenance" && (
         <View style={styles.maintenanceBadge}>
           <Text style={styles.maintenanceText}>Maintenance</Text>
         </View>
       )}
 
-      {/* Credits */}
       <View style={styles.statsContainer}>
         <View style={styles.ratingRow}>
           <Ionicons name="star" size={14} color="#F59E0B" />
@@ -76,7 +76,6 @@ export default function MarketplaceCard({
         <Text style={styles.stat}>Run: {hourlyUsage} Credits/hr</Text>
       </View>
 
-      {/* Deploy Button */}
       <Pressable style={styles.button} onPress={onPress}>
         <Text style={styles.buttonText}>View Details</Text>
       </Pressable>
@@ -84,161 +83,175 @@ export default function MarketplaceCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    width: "48%",
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    card: {
+      width: "48%",
 
-    backgroundColor: COLORS.card,
+      backgroundColor: theme.colors.card,
 
-    padding: 14,
+      padding: 14,
 
-    borderRadius: 18,
+      borderRadius: 20,
 
-    marginBottom: 12,
+      marginBottom: 14,
 
-    ...SHADOWS.sm,
-  },
+      borderWidth: 1,
+      borderColor: theme.colors.border,
 
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      shadowOffset: {
+        width: 0,
+        height: 5,
+      },
 
-  iconContainer: {
-    width: 46,
-    height: 46,
+      elevation: 4,
+    },
 
-    borderRadius: 23,
+    topRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
 
-    backgroundColor: COLORS.successBg,
+    iconContainer: {
+      width: 46,
+      height: 46,
 
-    justifyContent: "center",
-    alignItems: "center",
-  },
+      borderRadius: 23,
 
-  titleRow: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
+      backgroundColor: theme.colors.successLight,
 
-  popularBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    backgroundColor: "#FFF7ED",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
-    marginTop: 8,
-  },
+      justifyContent: "center",
+      alignItems: "center",
+    },
 
-  popularText: {
-    marginLeft: 4,
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#F97316",
-  },
+    titleRow: {
+      flex: 1,
+      justifyContent: "center",
+    },
 
-  maintenanceBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: "#FEF2F2",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
-    marginTop: 8,
-  },
+    name: {
+      flex: 1,
 
-  maintenanceText: {
-    color: "#DC2626",
-    fontSize: 11,
-    fontWeight: "700",
-  },
+      fontSize: 15,
 
-  name: {
-    flex: 1,
+      fontWeight: "800",
 
-    fontSize: 15,
+      color: theme.colors.text,
+    },
 
-    fontWeight: "700",
+    description: {
+      color: theme.colors.secondaryText,
 
-    color: COLORS.text,
-  },
+      fontSize: 12,
 
-  description: {
-    color: COLORS.muted,
+      marginTop: 12,
 
-    fontSize: 12,
+      lineHeight: 18,
 
-    marginTop: 12,
+      minHeight: 36,
+    },
 
-    minHeight: 32,
-  },
+    popularBadge: {
+      flexDirection: "row",
+      alignItems: "center",
 
-  ratingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
+      alignSelf: "flex-start",
 
-  rating: {
-    marginLeft: 4,
-    color: COLORS.text,
-    fontWeight: "700",
-    fontSize: 13,
-  },
+      backgroundColor: "#FFF7ED",
 
-  creditRow: {
-    flexDirection: "row",
+      paddingHorizontal: 8,
+      paddingVertical: 4,
 
-    alignItems: "center",
+      borderRadius: 999,
 
-    gap: 6,
+      marginTop: 10,
+    },
 
-    marginTop: 12,
-  },
+    popularText: {
+      marginLeft: 4,
 
-  credits: {
-    color: COLORS.success,
+      color: "#F97316",
 
-    fontWeight: "600",
+      fontSize: 11,
 
-    fontSize: 13,
-  },
+      fontWeight: "700",
+    },
 
-  button: {
-    marginTop: 14,
+    maintenanceBadge: {
+      alignSelf: "flex-start",
 
-    backgroundColor: COLORS.successLight,
+      backgroundColor: theme.colors.dangerLight,
 
-    borderWidth: 1,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
 
-    borderColor: COLORS.primary,
+      borderRadius: 999,
 
-    paddingVertical: 10,
+      marginTop: 10,
+    },
 
-    borderRadius: 12,
+    maintenanceText: {
+      color: theme.colors.danger,
 
-    alignItems: "center",
-  },
+      fontSize: 11,
 
-  buttonText: {
-    color: COLORS.success,
+      fontWeight: "700",
+    },
 
-    fontWeight: "700",
+    statsContainer: {
+      marginTop: 14,
+    },
 
-    fontSize: 14,
-  },
+    ratingRow: {
+      flexDirection: "row",
+      alignItems: "center",
 
-  statsContainer: {
-    marginTop: 12,
-  },
+      marginBottom: 8,
+    },
 
-  stat: {
-    color: COLORS.muted,
-    fontSize: 12,
-    marginBottom: 3,
-  },
-});
+    rating: {
+      marginLeft: 4,
+
+      color: theme.colors.text,
+
+      fontWeight: "700",
+
+      fontSize: 13,
+    },
+
+    stat: {
+      color: theme.colors.muted,
+
+      fontSize: 12,
+
+      marginBottom: 4,
+    },
+
+    button: {
+      marginTop: 16,
+
+      backgroundColor: theme.colors.successLight,
+
+      borderWidth: 1,
+      borderColor: theme.colors.primary,
+
+      borderRadius: 12,
+
+      paddingVertical: 10,
+
+      alignItems: "center",
+    },
+
+    buttonText: {
+      color: theme.colors.success,
+
+      fontWeight: "700",
+
+      fontSize: 14,
+    },
+  });
+}

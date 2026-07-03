@@ -1,4 +1,4 @@
-import { COLORS } from "@/constants";
+import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -20,7 +20,10 @@ export default function Header({
   showName = false,
   showSearch = false,
 }: HeaderProps) {
+  const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+
+  const styles = createStyles(theme);
 
   const hour = new Date().getHours();
 
@@ -46,7 +49,14 @@ export default function Header({
   });
 
   return (
-    <View style={[styles.header]}>
+    <View
+      style={[
+        styles.header,
+        {
+          paddingTop: insets.top + -20,
+        },
+      ]}
+    >
       <View style={styles.topRow}>
         <View style={styles.brandRow}>
           <View style={styles.brandContainer}>
@@ -72,7 +82,7 @@ export default function Header({
               <Ionicons
                 name="notifications-outline"
                 size={24}
-                color={COLORS.white}
+                color={theme.colors.white}
               />
 
               <View style={styles.badge}>
@@ -86,7 +96,11 @@ export default function Header({
               style={styles.profileButton}
               onPress={() => router.push("/profile")}
             >
-              <Ionicons name="person-circle" size={50} color={COLORS.white} />
+              <Ionicons
+                name="person-circle"
+                size={50}
+                color={theme.colors.white}
+              />
             </Pressable>
           )}
         </View>
@@ -111,125 +125,124 @@ export default function Header({
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 24,
-    paddingBottom: 18,
+function createStyles(theme: any) {
+  return StyleSheet.create({
+    header: {
+      backgroundColor: theme.colors.primary,
 
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-  },
+      paddingHorizontal: 24,
+      paddingBottom: 14,
+      borderBottomLeftRadius: 30,
+      borderBottomRightRadius: 30,
+    },
 
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
+    topRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 8,
+    },
 
-  brandRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
+    brandRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
 
-  brandContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
+    brandContainer: {
+      width: 50,
+      height: 50,
+      borderRadius: 14,
 
-  brandText: {
-    color: COLORS.white,
-    fontSize: 22,
-    fontWeight: "800",
-    letterSpacing: 1,
-  },
+      backgroundColor: "rgba(255,255,255,0.15)",
 
-  appName: {
-    color: COLORS.white,
-    fontSize: 18,
-    fontWeight: "700",
-  },
+      justifyContent: "center",
+      alignItems: "center",
+    },
 
-  appTag: {
-    color: "rgba(255,255,255,0.8)",
-    fontSize: 12,
-  },
+    brandText: {
+      color: theme.colors.white,
+      fontSize: 22,
+      fontWeight: "800",
+      letterSpacing: 1,
+    },
 
-  actionsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
+    appName: {
+      color: theme.colors.white,
+      fontSize: 18,
+      fontWeight: "700",
+    },
 
-  notificationContainer: {
-    position: "relative",
-  },
+    appTag: {
+      color: "rgba(255,255,255,0.82)",
+      fontSize: 12,
+    },
 
-  badge: {
-    position: "absolute",
+    actionsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
 
-    top: -5,
-    right: -5,
+    notificationContainer: {
+      position: "relative",
+    },
 
-    width: 18,
-    height: 18,
+    badge: {
+      position: "absolute",
 
-    borderRadius: 9,
+      top: -5,
+      right: -5,
 
-    backgroundColor: COLORS.danger,
+      width: 18,
+      height: 18,
 
-    justifyContent: "center",
-    alignItems: "center",
-  },
+      borderRadius: 9,
 
-  badgeText: {
-    color: COLORS.white,
-    fontSize: 10,
-    fontWeight: "700",
-  },
+      backgroundColor: theme.colors.danger,
 
-  profileContainer: {
-    alignItems: "flex-end",
-    marginBottom: 8,
-  },
+      justifyContent: "center",
+      alignItems: "center",
+    },
 
-  profileButton: {
-    borderRadius: 25,
-  },
+    badgeText: {
+      color: theme.colors.white,
+      fontSize: 10,
+      fontWeight: "700",
+    },
 
-  greeting: {
-    color: COLORS.white,
-    fontSize: 18,
-    fontWeight: "600",
-  },
+    profileButton: {
+      borderRadius: 25,
+    },
 
-  userName: {
-    color: COLORS.white,
-    fontSize: 32,
-    fontWeight: "700",
-    marginTop: 2,
-  },
+    greeting: {
+      color: theme.colors.white,
+      fontSize: 18,
+      fontWeight: "600",
+    },
 
-  timeText: {
-    color: "rgba(255,255,255,0.85)",
-    fontSize: 13,
-    marginTop: 4,
-  },
+    userName: {
+      color: theme.colors.white,
+      fontSize: 32,
+      fontWeight: "700",
+      marginTop: 2,
+    },
 
-  subtitle: {
-    color: COLORS.white,
-    fontSize: 15,
-    marginTop: 8,
-    lineHeight: 22,
-  },
+    timeText: {
+      color: "rgba(255,255,255,0.85)",
+      fontSize: 13,
+      marginTop: 4,
+    },
 
-  searchWrapper: {
-    marginTop: 14,
-  },
-});
+    subtitle: {
+      color: theme.colors.white,
+      fontSize: 15,
+      marginTop: 8,
+      lineHeight: 22,
+    },
+
+    searchWrapper: {
+      marginTop: 16,
+    },
+  });
+}

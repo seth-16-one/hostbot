@@ -5,7 +5,8 @@ export type ButtonVariant =
   | "secondary"
   | "outline"
   | "danger"
-  | "success";
+  | "success"
+  | "ghost";
 
 export type ButtonSize = "small" | "medium" | "large";
 

@@ -2,7 +2,7 @@ import { Input } from "@/components/ui";
 import { useTheme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
 interface Props {
   value: string;
@@ -18,10 +18,11 @@ export default function PasswordField({
   placeholder = "Enter password",
 }: Props) {
   const { theme } = useTheme();
+
   const [visible, setVisible] = useState(false);
 
   return (
-    <>
+    <View style={styles.container}>
       <Input
         label={label}
         value={value}
@@ -30,22 +31,32 @@ export default function PasswordField({
         secureTextEntry={!visible}
       />
 
-      <Pressable style={styles.eye} onPress={() => setVisible(!visible)}>
+      <Pressable
+        style={styles.eye}
+        onPress={() => setVisible((v) => !v)}
+        hitSlop={10}
+      >
         <Ionicons
           name={visible ? "eye-off-outline" : "eye-outline"}
           size={22}
           color={theme.colors.muted}
         />
       </Pressable>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    position: "relative",
+  },
+
   eye: {
     position: "absolute",
-    right: 15,
-    top: 42,
-    padding: 5,
+    right: 16,
+    top: 43,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 6,
   },
 });

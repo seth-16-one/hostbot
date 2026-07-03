@@ -11,16 +11,23 @@ export default function SocialLogin({ onPress }: Props) {
 
   return (
     <Pressable
-      style={[
+      onPress={onPress}
+      android_ripple={{
+        color: theme.colors.primary + "20",
+        borderless: false,
+      }}
+      style={({ pressed }) => [
         styles.button,
         {
           borderColor: theme.colors.border,
           backgroundColor: theme.colors.card,
+          shadowColor: theme.colors.shadow,
+          opacity: pressed ? 0.9 : 1,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
         },
       ]}
-      onPress={onPress}
     >
-      <Ionicons name="logo-google" size={20} color={theme.colors.text} />
+      <Ionicons name="logo-google" size={22} color={theme.colors.text} />
 
       <Text
         style={[
@@ -38,18 +45,36 @@ export default function SocialLogin({ onPress }: Props) {
 
 const styles = StyleSheet.create({
   button: {
-    height: 56,
+    height: 58,
+
+    marginTop: 18,
+
+    borderRadius: 18,
+
     borderWidth: 1,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
+
     flexDirection: "row",
+
+    alignItems: "center",
+
+    justifyContent: "center",
+
     gap: 10,
-    marginTop: 16,
+
+    shadowOpacity: 0.06,
+
+    shadowRadius: 8,
+
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+
+    elevation: 2,
   },
 
   text: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
   },
 });

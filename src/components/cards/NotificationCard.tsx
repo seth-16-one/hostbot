@@ -1,7 +1,9 @@
-import { COLORS } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 
 type Props = {
   id: string;
@@ -11,6 +13,9 @@ type Props = {
 };
 
 export default function NotificationCard({ id, title, message, type }: Props) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   const icon =
     type === "success"
       ? "checkmark-circle"
@@ -20,10 +25,10 @@ export default function NotificationCard({ id, title, message, type }: Props) {
 
   const color =
     type === "success"
-      ? COLORS.success
+      ? theme.colors.success
       : type === "warning"
-        ? COLORS.warning
-        : COLORS.info;
+        ? theme.colors.warning
+        : theme.colors.info;
 
   return (
     <Pressable
@@ -35,7 +40,9 @@ export default function NotificationCard({ id, title, message, type }: Props) {
         })
       }
     >
-      <Ionicons name={icon as any} size={24} color={color} />
+      <View style={styles.iconBox}>
+        <Ionicons name={icon as any} size={22} color={color} />
+      </View>
 
       <View style={styles.textContainer}>
         <Text style={styles.title}>{title}</Text>
@@ -43,36 +50,72 @@ export default function NotificationCard({ id, title, message, type }: Props) {
         <Text style={styles.message}>{message}</Text>
       </View>
 
-      <Ionicons name="chevron-forward" size={20} color="COLORS.tabInactive" />
+      <Ionicons
+        name="chevron-forward"
+        size={20}
+        color={theme.colors.iconLight}
+      />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    elevation: 2,
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: theme.colors.card,
 
-  textContainer: {
-    flex: 1,
-  },
+      borderRadius: 20,
 
-  title: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
+      padding: 16,
 
-  message: {
-    marginTop: 4,
-    color: COLORS.muted,
-    fontSize: 13,
-  },
-});
+      marginBottom: 14,
+
+      flexDirection: "row",
+      alignItems: "center",
+
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      shadowOffset: {
+        width: 0,
+        height: 5,
+      },
+
+      elevation: 4,
+    },
+
+    iconBox: {
+      width: 46,
+      height: 46,
+
+      borderRadius: 14,
+
+      backgroundColor: theme.colors.surface,
+
+      justifyContent: "center",
+      alignItems: "center",
+
+      marginRight: 14,
+    },
+
+    textContainer: {
+      flex: 1,
+    },
+
+    title: {
+      fontSize: 15,
+      fontWeight: "800",
+      color: theme.colors.text,
+    },
+
+    message: {
+      marginTop: 5,
+      fontSize: 13,
+      lineHeight: 19,
+      color: theme.colors.muted,
+    },
+  });
+}

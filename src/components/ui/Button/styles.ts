@@ -5,12 +5,17 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-
-    borderRadius: 16,
-
-    paddingHorizontal: 20,
-
+    borderRadius: 18,
+    paddingHorizontal: 22,
     gap: 10,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
   },
 
   fullWidth: {
@@ -18,15 +23,15 @@ export const styles = StyleSheet.create({
   },
 
   small: {
-    height: 44,
+    height: 46,
   },
 
   medium: {
-    height: 56,
+    height: 50,
   },
 
   large: {
-    height: 64,
+    height: 62,
   },
 
   outline: {
@@ -34,21 +39,17 @@ export const styles = StyleSheet.create({
   },
 
   disabled: {
-    opacity: 0.6,
+    opacity: 0.55,
   },
 
   pressed: {
-    opacity: 0.9,
+    opacity: 0.92,
     transform: [{ scale: 0.98 }],
   },
 
   text: {
     fontSize: 16,
     fontWeight: "700",
-  },
-
-  icon: {
-    alignItems: "center",
-    justifyContent: "center",
+    letterSpacing: 0.3,
   },
 });

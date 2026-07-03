@@ -1,20 +1,25 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 
 import AuthLayout from "@/components/auth/AuthLayout";
 import Button from "@/components/ui/Button";
+import Divider from "@/components/ui/Divider";
 import Input from "@/components/ui/Input";
+import SocialButton from "@/components/ui/SocialButton";
 import StatusBanner from "@/components/ui/StatusBanner";
+import { useToast } from "@/context/ToastContext";
 
 import { googleService } from "@/services/auth/google.service";
 import { useAuthStore } from "@/store/auth";
 import { useTheme } from "@/theme";
+import { AppTheme } from "@/theme/light";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginScreen() {
   const { theme } = useTheme();
+  const styles = createStyles(theme);
 
   const login = useAuthStore((state) => state.login);
   const googleLogin = useAuthStore((state) => state.googleLogin);
@@ -23,7 +28,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [showPassword, setShowPassword] = useState(false);
+  const { showToast } = useToast();
 
   const [error, setError] = useState("");
 
@@ -52,8 +57,29 @@ export default function LoginScreen() {
         email: email.trim().toLowerCase(),
         password,
       });
+
+      showToast({
+        title: "Welcome Back",
+        message: "Login successful.",
+        type: "success",
+      });
+
+      // No router.push() needed if your auth store redirects automatically.
     } catch (err: any) {
       setError(err.message);
+
+      // Optional: show toast only for connection/server errors
+      if (
+        err.message?.includes("Network") ||
+        err.message?.includes("fetch") ||
+        err.message?.includes("Failed")
+      ) {
+        showToast({
+          title: "Connection Error",
+          message: "Unable to reach the server. Please try again.",
+          type: "error",
+        });
+      }
     }
   }
 
@@ -69,86 +95,85 @@ export default function LoginScreen() {
   return (
     <AuthLayout
       title="Welcome Back"
-      subtitle="Sign in to continue managing your bots."
+      subtitle="Manage and deploy your WhatsApp bots securely."
     >
       {error ? (
         <StatusBanner type="error" title="Login Failed" message={error} />
       ) : null}
 
+      <>
+        <Divider text="CONTINUE WITH" />
+
+        <SocialButton
+          title="Continue with Google"
+          icon="logo-google"
+          onPress={handleGoogle}
+        />
+
+        <Divider text="OR" />
+      </>
+
       <Input
         label="Email Address"
+        leftIcon="mail-outline"
         value={email}
         onChangeText={setEmail}
-        autoCapitalize="none"
         keyboardType="email-address"
+        autoCapitalize="none"
         placeholder="you@example.com"
       />
 
-      <View>
-        <Input
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={!showPassword}
-          placeholder="Password"
-        />
-      </View>
+      <Input
+        label="Password"
+        leftIcon="lock-closed-outline"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+        placeholder="Enter your password"
+      />
 
       <Pressable onPress={() => router.push("/(auth)/forgot-password")}>
-        <Text
-          style={[
-            styles.forgot,
-            {
-              color: theme.colors.primary,
-            },
-          ]}
-        >
-          Forgot Password?
-        </Text>
+        <Text style={styles.forgot}>Forgot Password?</Text>
       </Pressable>
 
-      <Button title="Login" loading={isLoading} onPress={handleLogin} />
-
-      {googleService.isAvailable() && (
-        <Button
-          title="Continue with Google"
-          variant="outline"
-          onPress={handleGoogle}
-        />
-      )}
+      <Button
+        title="Sign In"
+        loading={isLoading}
+        disabled={!email.trim() || !password || isLoading}
+        onPress={handleLogin}
+      />
 
       <Pressable onPress={() => router.push("/(auth)/register")}>
-        <Text
-          style={[
-            styles.register,
-            {
-              color: theme.colors.primary,
-            },
-          ]}
-        >
-          Don't have an account? Register
-        </Text>
+        <Text style={styles.register}>Don't have an account? Register</Text>
       </Pressable>
     </AuthLayout>
   );
 }
 
-const styles = StyleSheet.create({
-  eye: {
-    position: "absolute",
-    right: 16,
-    top: 44,
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    forgot: {
+      alignSelf: "flex-end",
 
-  forgot: {
-    alignSelf: "flex-end",
-    marginBottom: 12,
-    fontWeight: "600",
-  },
+      marginBottom: 16,
 
-  register: {
-    textAlign: "center",
-    marginTop: 20,
-    fontWeight: "700",
-  },
-});
+      color: theme.colors.primary,
+
+      fontSize: 14,
+
+      fontWeight: "700",
+    },
+
+    register: {
+      marginTop: 28,
+
+      textAlign: "center",
+
+      color: theme.colors.primary,
+
+      fontSize: 15,
+
+      fontWeight: "700",
+    },
+  });
+}

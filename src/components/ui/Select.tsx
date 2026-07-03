@@ -1,4 +1,5 @@
-import { COLORS } from "@/constants";
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 import { Picker } from "@react-native-picker/picker";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -7,19 +8,33 @@ type Props = {
   value: string;
   onChange: (value: string) => void;
   options: string[];
+  disabled?: boolean;
 };
 
-export default function Select({ label, value, onChange, options }: Props) {
+export default function Select({
+  label,
+  value,
+  onChange,
+  options,
+  disabled = false,
+}: Props) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
 
-      <View style={styles.pickerWrapper}>
+      <View style={[styles.pickerWrapper, disabled && styles.disabled]}>
         <Picker
+          enabled={!disabled}
           selectedValue={value}
           onValueChange={onChange}
-          style={{ color: COLORS.text }}
+          dropdownIconColor={theme.colors.text}
+          style={styles.picker}
         >
+          <Picker.Item label={`Select ${label}`} value="" />
+
           {options.map((item) => (
             <Picker.Item key={item} label={item} value={item} />
           ))}
@@ -29,22 +44,48 @@ export default function Select({ label, value, onChange, options }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 14,
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    container: {
+      marginBottom: 16,
+    },
 
-  pickerWrapper: {
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 14,
-    overflow: "hidden",
-  },
+    label: {
+      marginBottom: 8,
 
-  label: {
-    marginBottom: 6,
-    color: COLORS.muted,
-    fontWeight: "500",
-  },
-});
+      color: theme.colors.secondaryText,
+
+      fontSize: 14,
+      fontWeight: "600",
+    },
+
+    pickerWrapper: {
+      backgroundColor: theme.colors.card,
+
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+
+      borderRadius: 16,
+
+      overflow: "hidden",
+
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+
+      elevation: 2,
+    },
+
+    picker: {
+      color: theme.colors.text,
+    },
+
+    disabled: {
+      opacity: 0.55,
+    },
+  });
+}

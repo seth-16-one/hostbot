@@ -1,44 +1,91 @@
 import { apiClient } from "@/services/api/client";
 import type {
-  PaymentMethod,
   RechargePackage,
+  RechargeRequest,
   RechargeSession,
   WalletBalance,
   WalletTransaction,
 } from "@/types/wallet";
 
+export const walletSettings = {
+  minimumRecharge: 100,
+  creditRate: 1,
+};
+
 export const rechargePackages: RechargePackage[] = [
-  { id: "starter", credits: 100, price: 150, currency: "KES" },
-  { id: "growth", credits: 500, price: 650, currency: "KES", bonusCredits: 50 },
-  { id: "scale", credits: 1200, price: 1400, currency: "KES", bonusCredits: 200 },
+  {
+    id: "starter",
+    title: "Starter",
+    credits: 100,
+    price: 150,
+    currency: "KES",
+    bonusCredits: 10,
+    badge: "Starter",
+  },
+  {
+    id: "growth",
+    title: "Growth",
+    credits: 500,
+    price: 650,
+    currency: "KES",
+    bonusCredits: 75,
+    featured: true,
+    badge: "Most Popular",
+  },
+  {
+    id: "scale",
+    title: "Scale",
+    credits: 1200,
+    price: 1400,
+    currency: "KES",
+    bonusCredits: 200,
+    badge: "Best Value",
+  },
 ];
 
 export const walletService = {
+  async getWallet() {
+    const response = await apiClient.get<{
+      success: boolean;
+      wallet: {
+        id: string;
+        userId: string;
+        credits: number;
+        createdAt: string;
+        updatedAt: string;
+      };
+    }>("/wallet");
+
+    return response.data.wallet;
+  },
+
   async getBalance(): Promise<WalletBalance> {
-    const response = await apiClient.get<WalletBalance>("/wallet/balance");
-    return response.data;
+    const wallet = await this.getWallet();
+
+    return {
+      credits: wallet.credits,
+      updatedAt: wallet.updatedAt,
+    };
   },
 
   async getTransactions(): Promise<WalletTransaction[]> {
-    const response =
-      await apiClient.get<WalletTransaction[]>("/wallet/transactions");
+    const response = await apiClient.get<WalletTransaction[]>(
+      "/wallet/transactions",
+    );
     return response.data;
   },
 
   async getPackages(): Promise<RechargePackage[]> {
-    const response =
-      await apiClient.get<RechargePackage[]>("/wallet/packages");
+    const response = await apiClient.get<RechargePackage[]>("/wallet/packages");
     return response.data;
   },
 
-  async createRecharge(
-    packageId: string,
-    method: PaymentMethod,
-  ): Promise<RechargeSession> {
-    const response = await apiClient.post<RechargeSession>("/wallet/recharge", {
-      packageId,
-      method,
-    });
+  async createRecharge(payload: RechargeRequest): Promise<RechargeSession> {
+    const response = await apiClient.post<RechargeSession>(
+      "/wallet/recharge",
+      payload,
+    );
+
     return response.data;
   },
 

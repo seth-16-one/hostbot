@@ -1,4 +1,5 @@
-import { COLORS } from "@/constants";
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -17,8 +18,16 @@ export default function BottomSheetModal({
   children,
   onClose,
 }: Props) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      statusBarTranslucent
+    >
       <View style={styles.overlay}>
         <Pressable style={styles.backdrop} onPress={onClose} />
 
@@ -26,14 +35,14 @@ export default function BottomSheetModal({
           <View style={styles.handle} />
 
           <View style={styles.header}>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={styles.title}>{title}</Text>
 
-              {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+              {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
             </View>
 
-            <Pressable onPress={onClose}>
-              <Ionicons name="close" size={24} color={COLORS.text} />
+            <Pressable style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={22} color={theme.colors.text} />
             </Pressable>
           </View>
 
@@ -44,66 +53,95 @@ export default function BottomSheetModal({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    overlay: {
+      flex: 1,
+      justifyContent: "flex-end",
+    },
 
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
+    backdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.45)",
+    },
 
-  sheet: {
-    backgroundColor: COLORS.white,
+    sheet: {
+      backgroundColor: theme.colors.card,
 
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+      borderTopLeftRadius: 30,
+      borderTopRightRadius: 30,
 
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 24,
+      borderTopWidth: 1,
+      borderColor: theme.colors.border,
 
-    minHeight: 250,
-    maxHeight: "85%",
-  },
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 28,
 
-  handle: {
-    width: 60,
-    height: 5,
+      minHeight: 250,
+      maxHeight: "85%",
 
-    backgroundColor: COLORS.border,
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.12,
+      shadowRadius: 16,
+      shadowOffset: {
+        width: 0,
+        height: -6,
+      },
 
-    borderRadius: 20,
+      elevation: 12,
+    },
 
-    alignSelf: "center",
+    handle: {
+      width: 60,
+      height: 5,
 
-    marginBottom: 16,
-  },
+      borderRadius: 20,
 
-  header: {
-    flexDirection: "row",
+      alignSelf: "center",
 
-    justifyContent: "space-between",
+      backgroundColor: theme.colors.border,
 
-    alignItems: "center",
+      marginBottom: 18,
+    },
 
-    marginBottom: 20,
-  },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
 
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
+      marginBottom: 20,
+    },
 
-  subtitle: {
-    marginTop: 4,
-    color: COLORS.muted,
-  },
+    closeButton: {
+      width: 40,
+      height: 40,
 
-  content: {
-    flexGrow: 1,
-  },
-});
+      borderRadius: 12,
+
+      justifyContent: "center",
+      alignItems: "center",
+
+      backgroundColor: theme.colors.surface,
+    },
+
+    title: {
+      color: theme.colors.text,
+      fontSize: 20,
+      fontWeight: "800",
+    },
+
+    subtitle: {
+      marginTop: 5,
+
+      color: theme.colors.secondaryText,
+
+      fontSize: 14,
+      lineHeight: 20,
+    },
+
+    content: {
+      flexGrow: 1,
+    },
+  });
+}

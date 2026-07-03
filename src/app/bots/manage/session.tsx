@@ -77,7 +77,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "COLORS.background",
+    backgroundColor: COLORS.background,
   },
 
   center: {
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "COLORS.text",
+    color: COLORS.text,
 
     marginHorizontal: 16,
     marginTop: 20,
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   },
 
   dangerText: {
-    color: "COLORS.danger",
+    color: COLORS.danger,
     fontWeight: "700",
     fontSize: 15,
   },

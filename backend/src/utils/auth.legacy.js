@@ -1,7 +1,12 @@
 const crypto = require("crypto");
 
-const ACCESS_TOKEN_TTL_SECONDS = 60 * 15;
-const REFRESH_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30;
+const ACCESS_TOKEN_TTL_SECONDS = Number(
+  process.env.ACCESS_TOKEN_TTL_SECONDS || 60 * 15,
+);
+
+const REFRESH_TOKEN_TTL_SECONDS = Number(
+  process.env.REFRESH_TOKEN_TTL_SECONDS || 60 * 60 * 24 * 30,
+);
 
 function base64Url(input) {
   return Buffer.from(input).toString("base64url");
@@ -21,7 +26,9 @@ function createToken(user, type = "access") {
     type,
     exp:
       Math.floor(Date.now() / 1000) +
-      (type === "refresh" ? REFRESH_TOKEN_TTL_SECONDS : ACCESS_TOKEN_TTL_SECONDS),
+      (type === "refresh"
+        ? REFRESH_TOKEN_TTL_SECONDS
+        : ACCESS_TOKEN_TTL_SECONDS),
   };
   const encoded = base64Url(JSON.stringify(payload));
   return `${encoded}.${sign(encoded)}`;
@@ -40,7 +47,9 @@ function verifyToken(token) {
     return null;
   }
 
-  const payload = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
+  const payload = JSON.parse(
+    Buffer.from(encoded, "base64url").toString("utf8"),
+  );
   if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000)) {
     return null;
   }
@@ -48,7 +57,9 @@ function verifyToken(token) {
 }
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
-  const hash = crypto.pbkdf2Sync(password, salt, 120000, 64, "sha512").toString("hex");
+  const hash = crypto
+    .pbkdf2Sync(password, salt, 120000, 64, "sha512")
+    .toString("hex");
   return `${salt}:${hash}`;
 }
 

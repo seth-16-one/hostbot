@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Pressable,
   Text,
   TextInput,
@@ -30,6 +31,7 @@ export default function Input({
 
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(secureTextEntry);
+  const scale = useState(new Animated.Value(1))[0];
 
   const borderColor = error
     ? theme.colors.danger
@@ -38,6 +40,19 @@ export default function Input({
       : focused
         ? theme.colors.primary
         : theme.colors.border;
+
+  const shadowStyle = focused
+    ? {
+        shadowColor: theme.colors.primary,
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+        shadowOffset: {
+          width: 0,
+          height: 4,
+        },
+        elevation: 3,
+      }
+    : {};
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -58,19 +73,21 @@ export default function Input({
         </View>
       ) : null}
 
-      <View
+      <Animated.View
         style={[
           styles.inputContainer,
           {
             borderColor,
-            backgroundColor: theme.colors.card,
+            backgroundColor: theme.colors.surface,
+            transform: [{ scale }],
           },
+          shadowStyle,
         ]}
       >
         {leftIcon && (
           <Ionicons
             name={leftIcon}
-            size={20}
+            size={22}
             color={theme.colors.icon}
             style={styles.leftIcon}
           />
@@ -80,7 +97,7 @@ export default function Input({
           {...props}
           editable={editable}
           secureTextEntry={hidden}
-          placeholderTextColor={theme.colors.muted}
+          placeholderTextColor={theme.colors.subtitleText}
           style={[
             styles.input,
             {
@@ -88,8 +105,22 @@ export default function Input({
             },
             inputStyle,
           ]}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          onFocus={() => {
+            setFocused(true);
+
+            Animated.spring(scale, {
+              toValue: 1.02,
+              useNativeDriver: true,
+            }).start();
+          }}
+          onBlur={() => {
+            setFocused(false);
+
+            Animated.spring(scale, {
+              toValue: 1,
+              useNativeDriver: true,
+            }).start();
+          }}
         />
 
         {loading ? (
@@ -101,14 +132,14 @@ export default function Input({
           >
             <Ionicons
               name={hidden ? "eye-outline" : "eye-off-outline"}
-              size={20}
+              size={22}
               color={theme.colors.icon}
             />
           </Pressable>
         ) : rightIcon ? (
-          <Ionicons name={rightIcon} size={20} color={theme.colors.icon} />
+          <Ionicons name={rightIcon} size={22} color={theme.colors.icon} />
         ) : null}
-      </View>
+      </Animated.View>
 
       {error ? (
         <Text

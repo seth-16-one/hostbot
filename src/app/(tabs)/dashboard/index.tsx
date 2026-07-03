@@ -8,8 +8,16 @@ import ServerStatusCard from "@/components/cards/ServerStatusCard";
 import UsageCard from "@/components/cards/UsageCard";
 import Header from "@/components/layout/Header";
 import Screen from "@/components/layout/Screen";
-import { COLORS, SHADOWS } from "@/constants";
-import { deployments, system } from "@/data";
+import { useToast } from "@/context/ToastContext";
+import { system } from "@/data";
+import {
+  deploymentService,
+  type Deployment,
+} from "@/services/deployments/deployment.service";
+import { useAuthStore } from "@/store/auth";
+import { useWalletStore } from "@/store/wallet";
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 
 const activities = system.activity;
 const notifications = system.notifications;
@@ -17,24 +25,77 @@ const promoCards = system.promos;
 const status = system.serverStatus;
 const usage = system.usage;
 
-const myBots = deployments;
-
 import { router } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 export default function DashboardScreen() {
+  const [refreshing, setRefreshing] = useState(false);
+  const credits = useWalletStore((state) => state.balance);
+  const refreshBalance = useWalletStore((state) => state.refreshBalance);
+
+  const [myBots, setMyBots] = useState<Deployment[]>([]);
+
+  useEffect(() => {
+    refreshBalance();
+    loadDeployments();
+  }, []);
+
+  const { showToast } = useToast();
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
+  const user = useAuthStore((state) => state.user);
+
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+
+      await refreshBalance();
+    } catch (error) {
+      showToast({
+        title: "Refresh Failed",
+        message: "Unable to refresh dashboard. Check your internet connection.",
+        type: "error",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  async function loadDeployments() {
+    try {
+      const data = await deploymentService.getMyDeployments();
+      setMyBots(data);
+    } catch (err) {
+    }
+  }
+
   return (
-    <Screen backgroundColor={COLORS.primary}>
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
+    <Screen backgroundColor={theme.colors.primary}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <Header
-          name="Seth"
+          name={user ? `${user.firstName} ${user.lastName}` : "User"}
           subtitle="Manage your bots and activity"
           showProfile={true}
           showName={true}
           showSearch={false}
         />
 
-        <CreditsCard credits={450} />
+        <CreditsCard credits={credits} />
 
         <View style={styles.content}>
           {/* Promo Cards */}
@@ -64,13 +125,13 @@ export default function DashboardScreen() {
             <ActionCard
               title="Create Bot"
               icon="add-circle-outline"
-              color={COLORS.primary}
+              color={theme.colors.primary}
             />
 
             <ActionCard
               title="Pair Bot"
               icon="link-outline"
-              color={COLORS.info}
+              color={theme.colors.info}
             />
           </View>
 
@@ -78,13 +139,13 @@ export default function DashboardScreen() {
             <ActionCard
               title="View Logs"
               icon="document-text-outline"
-              color={COLORS.warning}
+              color={theme.colors.warning}
             />
 
             <ActionCard
               title="Billing"
               icon="card-outline"
-              color={COLORS.purple}
+              color={theme.colors.purple}
             />
           </View>
 
@@ -92,18 +153,26 @@ export default function DashboardScreen() {
           <Text style={styles.sectionTitle}>My Bots</Text>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {myBots.slice(0, 3).map((bot) => (
-              <MyBotCard
-                key={bot.id}
-                id={bot.id}
-                icon={bot.icon}
-                name={bot.name}
-                platform={bot.platform}
-                status={bot.status}
-                messages={bot.messages}
-                onPress={() => router.push(`/bots/manage/${bot.id}` as any)}
-              />
-            ))}
+            {myBots.length === 0 ? (
+              <Text style={styles.emptyText}>No bots deployed yet.</Text>
+            ) : (
+              myBots
+                .slice(0, 3)
+                .map((deployment) => (
+                  <MyBotCard
+                    key={deployment.id}
+                    id={deployment.id}
+                    icon={deployment.bot.icon ?? ""}
+                    name={deployment.bot.name}
+                    platform={deployment.bot.category ?? "WhatsApp"}
+                    status={deployment.status}
+                    messages={0}
+                    onPress={() =>
+                      router.push(`/bots/manage/${deployment.id}` as any)
+                    }
+                  />
+                ))
+            )}
           </ScrollView>
 
           {/*Usage Analytics*/}
@@ -212,76 +281,101 @@ export default function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
 
-  content: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
+    content: {
+      paddingHorizontal: 20,
+      paddingBottom: 40,
+    },
 
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginTop: 24,
-    marginBottom: 12,
-    color: COLORS.text,
-  },
+    emptyText: {
+      textAlign: "center",
+      color: theme.colors.secondaryText,
+      paddingVertical: 20,
+      fontSize: 15,
+    },
 
-  promoContainer: {
-    paddingBottom: 10,
-  },
+    sectionTitle: {
+      color: theme.colors.text,
+      fontSize: 20,
+      fontWeight: "800",
 
-  actionRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 12,
-  },
+      marginTop: 24,
+      marginBottom: 12,
+    },
 
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 24,
-    marginBottom: 12,
-  },
+    promoContainer: {
+      paddingBottom: 10,
+    },
 
-  viewAll: {
-    color: COLORS.primary,
-    fontWeight: "600",
-    fontSize: 14,
-  },
+    actionRow: {
+      flexDirection: "row",
+      gap: 12,
+      marginBottom: 12,
+    },
 
-  activityCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ff",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 10,
-    gap: 12,
+    sectionHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
 
-    ...SHADOWS.sm,
-  },
+      marginTop: 24,
+      marginBottom: 12,
+    },
 
-  activityText: {
-    flex: 1,
-    fontSize: 14,
-    color: COLORS.secondaryText,
-  },
+    viewAll: {
+      color: theme.colors.primary,
+      fontWeight: "700",
+      fontSize: 14,
+    },
 
-  analyticsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
+    activityCard: {
+      flexDirection: "row",
+      alignItems: "center",
 
-  statsRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 12,
-  },
-});
+      backgroundColor: theme.colors.card,
+
+      padding: 16,
+
+      borderRadius: 18,
+
+      marginBottom: 10,
+
+      gap: 12,
+
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      shadowOffset: {
+        width: 0,
+        height: 3,
+      },
+
+      elevation: 3,
+    },
+
+    activityText: {
+      flex: 1,
+      fontSize: 14,
+      color: theme.colors.secondaryText,
+    },
+
+    analyticsGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 12,
+    },
+
+    statsRow: {
+      flexDirection: "row",
+      gap: 12,
+      marginBottom: 12,
+    },
+  });
+}
+

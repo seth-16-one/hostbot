@@ -20,15 +20,29 @@ export default function PairScreen() {
   );
   const generateSession = useDeploymentStore((state) => state.generateSession);
   const deployBot = useDeploymentStore((state) => state.deployBot);
-  const syncBotStatus = useDeploymentStore((state) => state.syncBotStatus);
+  const fetchDeployment = useDeploymentStore((state) => state.fetchDeployment);
+  const pollPairingSession = useDeploymentStore((state) => state.pollPairingSession);
+  const refreshSession = useDeploymentStore((state) => state.refreshSession);
   const updateDeployment = useDeploymentStore((state) => state.updateDeployment);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showExpiredModal, setShowExpiredModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(300);
 
   const expiresAt = deployment?.session?.expiresAt;
   const pairCode = deployment?.session?.pairCode ?? "--------";
   const qrValue = deployment?.session?.qrValue ?? pairCode;
+
+  useEffect(() => {
+    if (deployment || !deploymentId) return;
+    fetchDeployment(deploymentId).catch((error) => {
+      showToast({
+        title: "Deployment Error",
+        message: (error as Error).message,
+        type: "error",
+      });
+    });
+  }, [deployment, deploymentId, fetchDeployment, showToast]);
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -46,10 +60,45 @@ export default function PairScreen() {
   }, [deployment, expiresAt, updateDeployment]);
 
   useEffect(() => {
-    if (!deployment || deployment.status !== "pairing") return;
-    const timer = setInterval(() => syncBotStatus(deployment.id), 5000);
+    if (!deployment || deployment.status !== "pairing" || !deployment.session?.id) return;
+
+    const poll = async () => {
+      try {
+        const session = await pollPairingSession(deployment.id);
+        if (!session) return;
+
+        if (session.status === "connected") {
+          await deployBot(deployment.id);
+          router.replace({
+            pathname: "/bots/pair/success",
+            params: {
+              deploymentId: deployment.id,
+              phone: session.phone || deployment.ownerNumber,
+              connectedAt: session.connectedAt || new Date().toISOString(),
+            },
+          } as any);
+        }
+
+        if (session.status === "expired") {
+          setShowExpiredModal(true);
+        }
+
+        if (session.status === "closed") {
+          router.replace(`/bots/configure/${deployment.botId}` as any);
+        }
+      } catch {
+        showToast({
+          title: "Connection Issue",
+          message: "Unable to update pairing status. Please try again.",
+          type: "error",
+        });
+      }
+    };
+
+    poll();
+    const timer = setInterval(poll, 2500);
     return () => clearInterval(timer);
-  }, [deployment, syncBotStatus]);
+  }, [deployBot, deployment, pollPairingSession, showToast]);
 
   const statusTone = useMemo(() => {
     if (deployment?.status === "online") return "success";
@@ -68,26 +117,64 @@ export default function PairScreen() {
 
   const copyCode = async () => {
     await Clipboard.setStringAsync(pairCode);
-    showToast("Pairing code copied", "success");
+    showToast({
+      title: "Pairing Code Copied",
+      message: "The pairing code is ready to paste.",
+      type: "success",
+    });
   };
 
   const sharePairCode = async () => {
     if (Platform.OS === "web") {
       await Clipboard.setStringAsync(pairCode);
-      showToast("Pairing code copied", "success");
+      showToast({
+        title: "Pairing Code Copied",
+        message: "The pairing code is ready to paste.",
+        type: "success",
+      });
       return;
     }
     await Share.share({ message: `Pairing Code: ${pairCode}` });
   };
 
   const retry = async () => {
-    await generateSession(deployment.id);
-    showToast("New pairing session started", "info");
+    setRefreshing(true);
+    try {
+      await refreshSession(deployment.id);
+      showToast({
+        title: "Pairing Code Refreshed",
+        message: "A new pairing session has started.",
+        type: "info",
+      });
+    } catch (error) {
+      showToast({
+        title: "Refresh Failed",
+        message: (error as Error).message,
+        type: "error",
+      });
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const completePairing = async () => {
-    await deployBot(deployment.id);
-    setShowSuccessModal(true);
+    try {
+      await deployBot(deployment.id);
+      router.replace({
+        pathname: "/bots/pair/success",
+        params: {
+          deploymentId: deployment.id,
+          phone: deployment.ownerNumber,
+          connectedAt: new Date().toISOString(),
+        },
+      } as any);
+    } catch (error) {
+      showToast({
+        title: "Start Failed",
+        message: (error as Error).message,
+        type: "error",
+      });
+    }
   };
 
   return (
@@ -133,7 +220,7 @@ export default function PairScreen() {
         </View>
 
         <Button title="I Have Paired Device" onPress={completePairing} disabled={deployment.status === "expired"} />
-        <Button title="Retry Pairing" variant="outline" onPress={retry} />
+        <Button title="Refresh Pair Code" variant="outline" onPress={retry} loading={refreshing} />
 
         <StatusModal
           visible={showSuccessModal}

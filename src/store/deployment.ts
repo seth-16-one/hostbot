@@ -14,8 +14,12 @@ interface DeploymentStore {
   activeDeploymentId: string | null;
   loading: boolean;
   error: string | null;
+  loadDeployments: () => Promise<void>;
+  fetchDeployment: (deploymentId: string) => Promise<Deployment>;
   createDeployment: (input: CreateDeploymentInput) => Promise<Deployment>;
   generateSession: (deploymentId: string) => Promise<PairingSession>;
+  refreshSession: (deploymentId: string) => Promise<PairingSession>;
+  pollPairingSession: (deploymentId: string) => Promise<PairingSession | null>;
   pairBot: (deploymentId: string) => Promise<void>;
   deployBot: (deploymentId: string) => Promise<void>;
   restartBot: (deploymentId: string) => Promise<void>;
@@ -49,6 +53,28 @@ export const useDeploymentStore = create<DeploymentStore>()(
       loading: false,
       error: null,
 
+      loadDeployments: async () => {
+        set({ loading: true, error: null });
+        try {
+          const deployments = await deploymentService.getDeployments();
+          set({ deployments, loading: false });
+        } catch (error) {
+          set({ loading: false, error: (error as Error).message });
+          throw error;
+        }
+      },
+
+      fetchDeployment: async (deploymentId) => {
+        const deployment = await deploymentService.getDeployment(deploymentId);
+        set((state) => ({
+          deployments: state.deployments.some((item) => item.id === deployment.id)
+            ? patchDeployment(state.deployments, deployment.id, deployment)
+            : [deployment, ...state.deployments],
+          activeDeploymentId: deployment.id,
+        }));
+        return deployment;
+      },
+
       createDeployment: async (input) => {
         set({ loading: true, error: null });
         try {
@@ -77,6 +103,32 @@ export const useDeploymentStore = create<DeploymentStore>()(
         return session;
       },
 
+      refreshSession: async (deploymentId) => {
+        get().updateDeployment(deploymentId, "creating_session");
+        const session = await deploymentService.refreshSession(deploymentId);
+        get().updateDeployment(deploymentId, "pairing", { session });
+        return session;
+      },
+
+      pollPairingSession: async (deploymentId) => {
+        const deployment = get().deployments.find((item) => item.id === deploymentId);
+        const sessionId = deployment?.session?.id;
+        if (!deployment || !sessionId) return null;
+
+        const session = await deploymentService.getPairingSession(sessionId);
+        const nextStatus =
+          session.status === "connected"
+            ? "online"
+            : session.status === "expired"
+              ? "expired"
+              : session.status === "closed"
+                ? "offline"
+                : "pairing";
+
+        get().updateDeployment(deploymentId, nextStatus, { session });
+        return session;
+      },
+
       pairBot: async (deploymentId) => {
         const status = await deploymentService.pairBot(deploymentId);
         get().updateDeployment(deploymentId, status);
@@ -100,6 +152,10 @@ export const useDeploymentStore = create<DeploymentStore>()(
 
       deleteBot: async (deploymentId) => {
         const status = await deploymentService.deleteBot(deploymentId);
+        if (status === "deleted") {
+          get().removeDeployment(deploymentId);
+          return;
+        }
         get().updateDeployment(deploymentId, status);
       },
 
@@ -109,8 +165,8 @@ export const useDeploymentStore = create<DeploymentStore>()(
           return;
         }
 
-        const status = await deploymentService.syncBotStatus(deploymentId);
-        get().updateDeployment(deploymentId, status);
+        const latest = await deploymentService.syncBotStatus(deploymentId);
+        get().updateDeployment(deploymentId, latest.status, latest);
       },
 
       updateDeployment: (id, status, patch) =>

@@ -2,26 +2,54 @@ import PageHeader from "@/components/layout/PageHeader";
 import Screen from "@/components/layout/Screen";
 import { Button, StatusBanner } from "@/components/ui";
 import { COLORS } from "@/constants";
+import { useToast } from "@/context/ToastContext";
 import { bots } from "@/data";
+import { botsService } from "@/services/bots/bots.service";
 import { useDeploymentStore } from "@/store/deployment";
 import { useWalletStore } from "@/store/wallet";
+import type { MarketplaceBot } from "@/types/bot";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function DeployScreen() {
   const { id } = useLocalSearchParams();
-  const bot = bots.marketplace.find((item) => item.id === Number(id));
+  const botId = Number(id);
+  const [bot, setBot] = useState<MarketplaceBot | null>(null);
+  const [loadingBot, setLoadingBot] = useState(true);
   const balance = useWalletStore((state) => state.balance);
   const refreshBalance = useWalletStore((state) => state.refreshBalance);
   const createDeployment = useDeploymentStore((state) => state.createDeployment);
   const generateSession = useDeploymentStore((state) => state.generateSession);
+  const { showToast } = useToast();
   const [deploying, setDeploying] = useState(false);
 
-  if (!bot) {
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadBot() {
+      try {
+        const apiBot = await botsService.getBot(botId);
+        if (mounted) setBot(apiBot);
+      } catch {
+        const fallbackBot = bots.marketplace.find((item) => item.id === botId) ?? null;
+        if (mounted) setBot(fallbackBot);
+      } finally {
+        if (mounted) setLoadingBot(false);
+      }
+    }
+
+    loadBot();
+
+    return () => {
+      mounted = false;
+    };
+  }, [botId]);
+
+  if (loadingBot || !bot) {
     return (
       <View style={styles.center}>
-        <Text>Bot not found</Text>
+        <Text>{loadingBot ? "Loading bot..." : "Bot not found"}</Text>
       </View>
     );
   }
@@ -47,6 +75,12 @@ export default function DeployScreen() {
       });
       await generateSession(deployment.id);
       router.push(`/bots/pair/${deployment.id}` as any);
+    } catch (error) {
+      showToast({
+        title: "Deployment Failed",
+        message: (error as Error).message,
+        type: "error",
+      });
     } finally {
       setDeploying(false);
     }

@@ -4,17 +4,20 @@ import { Pressable, StyleSheet, Text } from "react-native";
 
 import AuthLayout from "@/components/auth/AuthLayout";
 import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
 import StatusBanner from "@/components/ui/StatusBanner";
 
+import PasswordField from "@/components/auth/PasswordField";
 import { authService } from "@/services/auth/auth.service";
 import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 
 export default function ResetPasswordScreen() {
   const { theme } = useTheme();
+  const styles = createStyles(theme);
 
-  const { token } = useLocalSearchParams<{
-    token?: string;
+  const { email, otp } = useLocalSearchParams<{
+    email: string;
+    otp: string;
   }>();
 
   const [password, setPassword] = useState("");
@@ -26,8 +29,8 @@ export default function ResetPasswordScreen() {
   const [success, setSuccess] = useState(false);
 
   async function handleReset() {
-    if (!token) {
-      setError("Invalid reset token.");
+    if (!email || !otp) {
+      setError("Invalid password reset session.");
       return;
     }
 
@@ -46,11 +49,16 @@ export default function ResetPasswordScreen() {
       setError("");
 
       await authService.resetPassword({
-        token,
+        email,
+        otp,
         password,
       });
 
       setSuccess(true);
+
+      setTimeout(() => {
+        router.replace("/(auth)/login");
+      }, 1500);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -75,52 +83,44 @@ export default function ResetPasswordScreen() {
         />
       ) : null}
 
-      <Input
+      <PasswordField
         label="New Password"
-        secureTextEntry
         value={password}
         onChangeText={setPassword}
-        placeholder="New Password"
       />
 
-      <Input
+      <PasswordField
         label="Confirm Password"
-        secureTextEntry
         value={confirmPassword}
         onChangeText={setConfirmPassword}
-        placeholder="Confirm Password"
       />
 
-      <Button title="Update Password" loading={loading} onPress={handleReset} />
-
-      {success && (
-        <Button
-          title="Go to Login"
-          variant="outline"
-          onPress={() => router.replace("/(auth)/login")}
-        />
-      )}
+      <Button
+        title="Update Password"
+        loading={loading}
+        disabled={!password || !confirmPassword || loading}
+        onPress={handleReset}
+      />
 
       <Pressable onPress={() => router.replace("/(auth)/login")}>
-        <Text
-          style={[
-            styles.link,
-            {
-              color: theme.colors.primary,
-            },
-          ]}
-        >
-          Back to Login
-        </Text>
+        <Text style={styles.link}>Back to Login</Text>
       </Pressable>
     </AuthLayout>
   );
 }
 
-const styles = StyleSheet.create({
-  link: {
-    marginTop: 20,
-    textAlign: "center",
-    fontWeight: "700",
-  },
-});
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    link: {
+      marginTop: 24,
+
+      textAlign: "center",
+
+      color: theme.colors.primary,
+
+      fontSize: 15,
+
+      fontWeight: "700",
+    },
+  });
+}

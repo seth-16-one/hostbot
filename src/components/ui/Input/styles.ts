@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   container: {
-    marginBottom: 18,
+    marginBottom: 14,
   },
 
   labelRow: {
@@ -14,6 +14,7 @@ export const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "600",
+    marginLeft: 2,
   },
 
   required: {
@@ -25,10 +26,10 @@ export const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 16,
-    minHeight: 56,
-    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderRadius: 18,
+    minHeight: 58,
+    paddingHorizontal: 18,
   },
 
   leftIcon: {
@@ -38,7 +39,8 @@ export const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    paddingVertical: 16,
+    fontWeight: "500",
+    paddingVertical: 17,
   },
 
   rightButton: {

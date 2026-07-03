@@ -27,13 +27,19 @@ export default function Button({
           ? theme.colors.danger
           : variant === "success"
             ? theme.colors.success
-            : theme.colors.transparent;
+            : variant === "ghost"
+              ? "transparent"
+              : "transparent";
 
   const borderColor =
-    variant === "outline" ? theme.colors.primary : backgroundColor;
+    variant === "outline"
+      ? theme.colors.primary
+      : variant === "ghost"
+        ? "transparent"
+        : backgroundColor;
 
   const textColor =
-    variant === "outline"
+    variant === "outline" || variant === "ghost"
       ? theme.colors.primary
       : variant === "secondary"
         ? theme.colors.text
@@ -59,11 +65,33 @@ export default function Button({
 
         disabled && styles.disabled,
 
-        pressed && styles.pressed,
+        pressed && [
+          styles.pressed,
+          variant === "primary" && {
+            backgroundColor: theme.colors.primaryDark,
+          },
+        ],
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={textColor} />
+        <>
+          <ActivityIndicator
+            size="small"
+            color={textColor}
+            style={{ marginRight: 8 }}
+          />
+
+          <Text
+            style={[
+              styles.text,
+              {
+                color: textColor,
+              },
+            ]}
+          >
+            Please wait...
+          </Text>
+        </>
       ) : (
         <>
           {leftIcon}

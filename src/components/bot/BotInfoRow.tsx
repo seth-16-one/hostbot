@@ -1,5 +1,7 @@
-import { COLORS } from "@/constants";
 import { StyleSheet, Text, View } from "react-native";
+
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 
 type BotInfoRowProps = {
   label: string;
@@ -7,28 +9,45 @@ type BotInfoRowProps = {
 };
 
 export default function BotInfoRow({ label, value }: BotInfoRowProps) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.row}>
       <Text style={styles.label}>{label}</Text>
+
       <Text style={styles.value}>{value}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
 
-  label: {
-    color: COLORS.muted,
-    fontSize: 14,
-  },
+      paddingVertical: 12,
 
-  value: {
-    color: COLORS.text,
-    fontWeight: "600",
-  },
-});
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+
+    label: {
+      color: theme.colors.muted,
+
+      fontSize: 14,
+
+      fontWeight: "500",
+    },
+
+    value: {
+      color: theme.colors.text,
+
+      fontSize: 14,
+
+      fontWeight: "700",
+    },
+  });
+}

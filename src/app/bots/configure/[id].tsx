@@ -1,22 +1,68 @@
 import PageHeader from "@/components/layout/PageHeader";
 import Screen from "@/components/layout/Screen";
-import { Button, Input, PhoneInput } from "@/components/ui";
-import { COLORS } from "@/constants";
+import { Button, Input } from "@/components/ui";
+import PhoneInput from "@/components/ui/PhoneInput";
+
 import { bots } from "@/data";
+import { useToast } from "@/context/ToastContext";
+import { botsService } from "@/services/bots/bots.service";
 import { useDeploymentStore } from "@/store/deployment";
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
+import type { MarketplaceBot } from "@/types/bot";
+
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function ConfigureScreen() {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+  const { showToast } = useToast();
+
   const { id } = useLocalSearchParams();
-  const bot = bots.marketplace.find((item) => item.id === Number(id));
-  const [botName, setBotName] = useState(bot?.name || "");
+  const botId = Number(id);
+
+  const [bot, setBot] = useState<MarketplaceBot | null>(null);
+
+  const [botName, setBotName] = useState("");
   const [ownerNumber, setOwnerNumber] = useState("");
-  const [prefix] = useState(bot?.deploymentConfig.defaultPrefix ?? ".");
+  const [prefix, setPrefix] = useState(".");
   const [loading, setLoading] = useState(false);
-  const createDeployment = useDeploymentStore((state) => state.createDeployment);
+
+  const createDeployment = useDeploymentStore(
+    (state) => state.createDeployment,
+  );
+
   const generateSession = useDeploymentStore((state) => state.generateSession);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadBot() {
+      try {
+        const apiBot = await botsService.getBot(botId);
+        if (mounted) {
+          setBot(apiBot);
+          setBotName(apiBot.name);
+          setPrefix(apiBot.deploymentConfig.defaultPrefix);
+        }
+      } catch {
+        const fallbackBot = bots.marketplace.find((item) => item.id === botId) ?? null;
+        if (mounted) {
+          setBot(fallbackBot);
+          setBotName(fallbackBot?.name || "");
+          setPrefix(fallbackBot?.deploymentConfig.defaultPrefix ?? ".");
+        }
+      }
+    }
+
+    loadBot();
+
+    return () => {
+      mounted = false;
+    };
+  }, [botId]);
 
   const generatedSession = useMemo(
     () => `${bot?.name?.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
@@ -25,7 +71,9 @@ export default function ConfigureScreen() {
 
   const handleContinue = async () => {
     if (!bot) return;
+
     setLoading(true);
+
     try {
       const deployment = await createDeployment({
         botId: bot.id,
@@ -34,37 +82,92 @@ export default function ConfigureScreen() {
         prefix,
         sessionName: generatedSession,
       });
+
       await generateSession(deployment.id);
+
       router.push(`/bots/pair/${deployment.id}` as any);
+    } catch (error) {
+      showToast({
+        title: "Deployment Failed",
+        message: (error as Error).message,
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Screen backgroundColor={COLORS.primary}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <PageHeader title="Configure Bot" subtitle="Finalize deployment settings" showBack />
-        <View style={styles.content}>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Bot Information</Text>
-            <Input label="Bot Name" value={botName} onChangeText={setBotName} placeholder="My WhatsApp Bot" />
-          </View>
+    <Screen backgroundColor={theme.colors.primary}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
+        <PageHeader
+          title="Configure Bot"
+          subtitle="Review your deployment settings"
+          showBack
+        />
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Link Your Account</Text>
-            <PhoneInput value={ownerNumber} onChange={setOwnerNumber} />
-          </View>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Bot Identity</Text>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Deployment Information</Text>
-            <InfoRow label="Bot Version" value={bot?.version || "-"} />
-            <InfoRow label="Category" value={bot?.category || "-"} />
-            <InfoRow label="Minimum Credits" value={`${bot?.minimumCreditsRequired ?? 0} Credits`} />
-            <InfoRow label="Running Cost" value={`${bot?.runCreditsPerHour ?? 0} Credits/hr`} />
-            <InfoRow label="Session" value={generatedSession} />
-            <InfoRow label="Prefix" value={prefix} />
-            <Button title="Continue to Pairing" onPress={handleContinue} loading={loading} />
+          <Input
+            label="Bot Name"
+            value={botName}
+            onChangeText={setBotName}
+            placeholder="My WhatsApp Bot"
+          />
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>WhatsApp Number</Text>
+
+          <PhoneInput value={ownerNumber} onChange={setOwnerNumber} />
+
+          <Text style={styles.helperText}>
+            This WhatsApp number will be linked to this deployment.
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Deployment Details</Text>
+
+          <InfoRow
+            label="Bot Version"
+            value={bot?.version || "-"}
+            styles={styles}
+          />
+
+          <InfoRow
+            label="Category"
+            value={bot?.category || "-"}
+            styles={styles}
+          />
+
+          <InfoRow
+            label="Minimum Credits"
+            value={`${bot?.minimumCreditsRequired ?? 0} Credits`}
+            styles={styles}
+          />
+
+          <InfoRow
+            label="Running Cost"
+            value={`${bot?.runCreditsPerHour ?? 0} Credits/hr`}
+            styles={styles}
+          />
+
+          <InfoRow label="Session" value={generatedSession} styles={styles} />
+
+          <InfoRow label="Prefix" value={prefix} styles={styles} last />
+
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Continue"
+              onPress={handleContinue}
+              loading={loading}
+            />
           </View>
         </View>
       </ScrollView>
@@ -72,21 +175,99 @@ export default function ConfigureScreen() {
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({
+  label,
+  value,
+  styles,
+  last = false,
+}: {
+  label: string;
+  value: string;
+  styles: any;
+  last?: boolean;
+}) {
   return (
-    <View style={styles.row}>
+    <View
+      style={[
+        styles.row,
+        last && {
+          borderBottomWidth: 0,
+          paddingBottom: 0,
+          marginBottom: 0,
+        },
+      ]}
+    >
       <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{value}</Text>
+      <Text style={styles.value} numberOfLines={1} ellipsizeMode="middle">
+        {value}
+      </Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  content: { padding: 20 },
-  card: { backgroundColor: COLORS.white, borderRadius: 18, padding: 18, marginBottom: 16 },
-  cardTitle: { fontSize: 16, fontWeight: "700", marginBottom: 14, color: COLORS.text },
-  row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 12, gap: 12 },
-  label: { color: COLORS.muted },
-  value: { color: COLORS.text, fontWeight: "600", flex: 1, textAlign: "right" },
-});
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+
+    content: {
+      paddingBottom: 60,
+    },
+
+    card: {
+      marginHorizontal: 20,
+      marginTop: 20,
+
+      backgroundColor: theme.colors.card,
+      borderRadius: 20,
+      padding: 20,
+
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+
+    cardTitle: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: theme.colors.text,
+      marginBottom: 18,
+    },
+
+    helperText: {
+      marginTop: 10,
+      color: theme.colors.muted,
+      fontSize: 13,
+      lineHeight: 20,
+    },
+
+    row: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+
+    label: {
+      flex: 0.9,
+      color: theme.colors.muted,
+      fontSize: 15,
+    },
+
+    value: {
+      flex: 1.4,
+      textAlign: "right",
+      color: theme.colors.text,
+      fontWeight: "700",
+      fontSize: 15,
+    },
+
+    buttonContainer: {
+      marginTop: 34,
+      marginBottom: 20,
+    },
+  });
+}

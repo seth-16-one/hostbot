@@ -17,12 +17,14 @@ export default function AuthHeader({ title, subtitle }: Props) {
           styles.logo,
           {
             backgroundColor: theme.colors.primary,
+
+            shadowColor: theme.colors.primary,
           },
         ]}
       >
         <Ionicons
           name="hardware-chip-outline"
-          size={36}
+          size={38}
           color={theme.colors.white}
         />
       </View>
@@ -42,7 +44,9 @@ export default function AuthHeader({ title, subtitle }: Props) {
         style={[
           styles.subtitle,
           {
-            color: "rgba(255,255,255,0.82)",
+            color: theme.dark
+              ? "rgba(255,255,255,0.78)"
+              : "rgba(255,255,255,0.88)",
           },
         ]}
       >
@@ -55,28 +59,50 @@ export default function AuthHeader({ title, subtitle }: Props) {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    marginBottom: 35,
+
+    marginBottom: 38,
   },
 
   logo: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: 92,
+    height: 92,
+
+    borderRadius: 46,
+
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
+
+    marginBottom: 22,
+
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+
+    shadowOpacity: 0.28,
+
+    shadowRadius: 20,
+
+    elevation: 10,
   },
 
   title: {
     fontSize: 30,
+
     fontWeight: "800",
+
     marginBottom: 10,
+
+    letterSpacing: 0.3,
   },
 
   subtitle: {
     fontSize: 15,
+
     textAlign: "center",
+
     lineHeight: 24,
-    paddingHorizontal: 20,
+
+    paddingHorizontal: 24,
   },
 });

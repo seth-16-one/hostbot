@@ -25,7 +25,7 @@ function DocItem({ title }: { title: string }) {
     <View style={styles.item}>
       <Text style={styles.itemText}>{title}</Text>
 
-      <Ionicons name="chevron-forward" size={18} color="COLORS.tabInactive" />
+      <Ionicons name="chevron-forward" size={18} color={COLORS.tabInactive} />
     </View>
   );
 }

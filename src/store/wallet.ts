@@ -3,7 +3,7 @@ import {
   walletService,
 } from "@/services/wallet/wallet.service";
 import type {
-  PaymentMethod,
+  RechargeRequest,
   RechargeSession,
   WalletTransaction,
 } from "@/types/wallet";
@@ -16,13 +16,14 @@ interface WalletStore {
   transactions: WalletTransaction[];
   loading: boolean;
   error: string | null;
+
   packages: typeof rechargePackages;
+
   refreshBalance: () => Promise<void>;
   refreshTransactions: () => Promise<void>;
-  createRecharge: (
-    packageId: string,
-    method: PaymentMethod,
-  ) => Promise<RechargeSession>;
+
+  createRecharge: (payload: RechargeRequest) => Promise<RechargeSession>;
+
   verifyPayment: (session: RechargeSession) => Promise<RechargeSession>;
 }
 
@@ -33,36 +34,60 @@ export const useWalletStore = create<WalletStore>()(
       transactions: [],
       loading: false,
       error: null,
+
       packages: rechargePackages,
 
       refreshBalance: async () => {
-        set({ loading: true, error: null });
+        set({
+          loading: true,
+          error: null,
+        });
+
         try {
           const response = await walletService.getBalance();
-          set({ balance: response.credits, loading: false });
+
+          set({
+            balance: response.credits,
+            loading: false,
+          });
         } catch (error) {
-          set({ loading: false, error: (error as Error).message });
+          set({
+            loading: false,
+            error: (error as Error).message,
+          });
         }
       },
 
       refreshTransactions: async () => {
-        const transactions = await walletService.getTransactions();
-        set({ transactions });
+        try {
+          const transactions = await walletService.getTransactions();
+
+          set({ transactions });
+        } catch (error) {
+          set({
+            error: (error as Error).message,
+          });
+        }
       },
 
-      createRecharge: async (packageId, method) =>
-        walletService.createRecharge(packageId, method),
+      createRecharge: async (payload) => {
+        return walletService.createRecharge(payload);
+      },
 
       verifyPayment: async (session) => {
         const verified = await walletService.verifyPayment(session);
+
         await get().refreshBalance();
         await get().refreshTransactions();
+
         return verified;
       },
     }),
     {
       name: "hostbot-wallet",
+
       storage: createJSONStorage(() => AsyncStorage),
+
       partialize: (state) => ({
         balance: state.balance,
         transactions: state.transactions,

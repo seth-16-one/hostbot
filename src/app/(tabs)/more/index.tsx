@@ -1,44 +1,112 @@
 import PageHeader from "@/components/layout/PageHeader";
 import Screen from "@/components/layout/Screen";
-import { COLORS } from "@/constants";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+
+import { useToast } from "@/context/ToastContext";
 import { useAuthStore } from "@/store/auth";
+
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
+
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+
+import { useState } from "react";
+
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function MoreScreen() {
   const user = useAuthStore((state) => state.user);
-  const logoutSession = useAuthStore((state) => state.logout);
+  const logout = useAuthStore((state) => state.logout);
 
-  const logout = async () => {
-    await logoutSession();
-    router.replace("/login" as any);
+  const { showToast } = useToast();
+  const { theme } = useTheme();
+
+  const styles = createStyles(theme);
+
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const confirmLogout = async () => {
+    try {
+      setLoggingOut(true);
+
+      await logout();
+
+      setShowLogoutModal(false);
+
+      router.replace("/login" as any);
+    } catch {
+      showToast({
+        title: "Logout Failed",
+        message: "Unable to logout.",
+        type: "error",
+      });
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
+  const ProfileCard = () => (
+    <Pressable
+      style={styles.profileCard}
+      onPress={() => router.push("/profile" as any)}
+    >
+      <View style={styles.avatar}>
+        <Ionicons name="person" size={34} color={theme.colors.white} />
+      </View>
+
+      <View style={styles.profileInfo}>
+        <Text style={styles.profileName}>{user?.name ?? "Host Bot User"}</Text>
+
+        <Text style={styles.profileEmail}>
+          {user?.email ?? "hostbot@example.com"}
+        </Text>
+
+        <Text style={styles.profileHint}>Tap to manage your profile</Text>
+      </View>
+
+      <Ionicons
+        name="chevron-forward"
+        size={20}
+        color={theme.colors.iconLight}
+      />
+    </Pressable>
+  );
+
+  const MenuItem = ({
+    icon,
+    title,
+    onPress,
+  }: {
+    icon: keyof typeof Ionicons.glyphMap;
+    title: string;
+    onPress: () => void;
+  }) => (
+    <Pressable style={styles.menuItem} onPress={onPress}>
+      <View style={styles.menuLeft}>
+        <View style={styles.iconBox}>
+          <Ionicons name={icon} size={20} color={theme.colors.primary} />
+        </View>
+
+        <Text style={styles.menuTitle}>{title}</Text>
+      </View>
+
+      <Ionicons
+        name="chevron-forward"
+        size={18}
+        color={theme.colors.iconLight}
+      />
+    </Pressable>
+  );
+
   return (
-    <Screen backgroundColor={COLORS.primary}>
+    <Screen backgroundColor={theme.colors.primary}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <PageHeader title="More" subtitle="Manage your account and system" />
+        <PageHeader title="More" subtitle="Manage your account" />
 
         <View style={styles.content}>
-          {/* Profile */}
-
-          <Text style={styles.sectionTitle}>Profile</Text>
-
-          <View style={styles.card}>
-            <View style={styles.profileSummary}>
-              <Text style={styles.profileName}>{user?.name ?? "Host Bot User"}</Text>
-              <Text style={styles.profileMeta}>{user?.email}</Text>
-            </View>
-
-            <MenuItem
-              icon="person-outline"
-              title="My Profile"
-              onPress={() => router.push("/profile" as any)}
-            />
-          </View>
-
-          {/* Account */}
+          <ProfileCard />
 
           <Text style={styles.sectionTitle}>Account</Text>
 
@@ -68,8 +136,6 @@ export default function MoreScreen() {
             />
           </View>
 
-          {/* Support */}
-
           <Text style={styles.sectionTitle}>Support</Text>
 
           <View style={styles.card}>
@@ -92,8 +158,6 @@ export default function MoreScreen() {
             />
           </View>
 
-          {/* System */}
-
           <Text style={styles.sectionTitle}>System</Text>
 
           <View style={styles.card}>
@@ -105,13 +169,12 @@ export default function MoreScreen() {
 
             <MenuItem
               icon="information-circle-outline"
-              title="About Host Bot"
+              title="About HostBot"
               onPress={() => router.push("/about" as any)}
             />
           </View>
 
-          {/* About */}
-          <Text style={styles.sectionTitle}>About</Text>
+          <Text style={styles.sectionTitle}>Legal</Text>
 
           <View style={styles.card}>
             <MenuItem
@@ -133,115 +196,214 @@ export default function MoreScreen() {
             />
           </View>
 
-          {/* Logout */}
-
-          <Pressable style={styles.logoutButton} onPress={logout}>
-            <Ionicons name="log-out-outline" size={22} color={COLORS.danger} />
+          <Pressable
+            style={styles.logoutButton}
+            onPress={() => setShowLogoutModal(true)}
+          >
+            <Ionicons
+              name="log-out-outline"
+              size={22}
+              color={theme.colors.danger}
+            />
 
             <Text style={styles.logoutText}>Logout</Text>
           </Pressable>
         </View>
       </ScrollView>
+
+      <ConfirmModal
+        visible={showLogoutModal}
+        title="Logout"
+        type="error"
+        message="Are you sure you want to logout from your account?"
+        confirmText="Logout"
+        cancelText="Cancel"
+        loading={loggingOut}
+        onConfirm={confirmLogout}
+        onCancel={() => {
+          if (!loggingOut) {
+            setShowLogoutModal(false);
+          }
+        }}
+      />
     </Screen>
   );
 }
 
-function MenuItem({
-  icon,
-  title,
-  onPress,
-}: {
-  icon: any;
-  title: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable style={styles.menuItem} onPress={onPress}>
-      <View style={styles.menuLeft}>
-        <Ionicons name={icon} size={22} color={COLORS.primary} />
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
 
-        <Text style={styles.menuTitle}>{title}</Text>
-      </View>
+    content: {
+      padding: 20,
+      paddingBottom: 50,
+    },
 
-      <Ionicons name="chevron-forward" size={20} color={COLORS.tabInactive} />
-    </Pressable>
-  );
+    profileCard: {
+      backgroundColor: theme.colors.card,
+      borderRadius: 24,
+
+      padding: 20,
+
+      flexDirection: "row",
+      alignItems: "center",
+
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      shadowOffset: {
+        width: 0,
+        height: 6,
+      },
+
+      elevation: 4,
+
+      marginBottom: 24,
+    },
+
+    avatar: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+
+      backgroundColor: theme.colors.primary,
+
+      justifyContent: "center",
+      alignItems: "center",
+    },
+
+    profileInfo: {
+      flex: 1,
+      marginLeft: 18,
+    },
+
+    profileName: {
+      color: theme.colors.text,
+      fontSize: 19,
+      fontWeight: "800",
+    },
+
+    profileEmail: {
+      marginTop: 4,
+      color: theme.colors.secondaryText,
+      fontSize: 14,
+    },
+
+    profileHint: {
+      marginTop: 8,
+      color: theme.colors.primary,
+      fontWeight: "700",
+      fontSize: 13,
+    },
+
+    sectionTitle: {
+      color: theme.colors.text,
+      fontSize: 17,
+      fontWeight: "800",
+
+      marginTop: 24,
+      marginBottom: 12,
+    },
+
+    card: {
+      backgroundColor: theme.colors.card,
+
+      borderRadius: 22,
+
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+
+      overflow: "hidden",
+
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.06,
+      shadowRadius: 10,
+      shadowOffset: {
+        width: 0,
+        height: 5,
+      },
+
+      elevation: 3,
+    },
+
+    menuItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+
+      height: 72,
+
+      paddingHorizontal: 18,
+
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+
+    menuLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+
+    iconBox: {
+      width: 42,
+      height: 42,
+
+      borderRadius: 14,
+
+      backgroundColor: theme.colors.successLight,
+
+      justifyContent: "center",
+      alignItems: "center",
+
+      marginRight: 14,
+    },
+
+    menuTitle: {
+      color: theme.colors.text,
+      fontSize: 15,
+      fontWeight: "700",
+    },
+
+    logoutButton: {
+      marginTop: 30,
+
+      height: 58,
+
+      borderRadius: 18,
+
+      borderWidth: 1,
+      borderColor: theme.colors.dangerBorder,
+
+      backgroundColor: theme.colors.card,
+
+      justifyContent: "center",
+      alignItems: "center",
+
+      flexDirection: "row",
+
+      gap: 10,
+
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      shadowOffset: {
+        width: 0,
+        height: 3,
+      },
+
+      elevation: 2,
+    },
+
+    logoutText: {
+      color: theme.colors.danger,
+      fontWeight: "800",
+      fontSize: 15,
+    },
+  });
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-
-  content: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 10,
-    marginTop: 20,
-    color: COLORS.text,
-  },
-
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 18,
-    overflow: "hidden",
-  },
-
-  menuItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.surface,
-  },
-
-  menuLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-
-  menuTitle: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: COLORS.text,
-  },
-
-  logoutButton: {
-    backgroundColor: COLORS.white,
-    marginTop: 30,
-    borderRadius: 18,
-    padding: 18,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-  },
-
-  logoutText: {
-    color: COLORS.danger,
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  profileSummary: {
-    padding: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.surface,
-  },
-  profileName: {
-    color: COLORS.text,
-    fontSize: 17,
-    fontWeight: "800",
-  },
-  profileMeta: {
-    color: COLORS.muted,
-    marginTop: 4,
-  },
-});

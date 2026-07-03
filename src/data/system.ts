@@ -9,6 +9,7 @@ const system = {
       time: "2 minutes ago",
       type: "success",
       category: "Bots",
+      link: undefined,
     },
 
     {

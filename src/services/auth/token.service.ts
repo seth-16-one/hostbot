@@ -82,14 +82,11 @@ function decodeJwtPayload(token: string) {
 
 export const tokenService = {
   async saveTokens(tokens: TokenPair) {
-    console.log("Saving tokens:", tokens);
 
     await Promise.all([
       setSecureItem(ACCESS_TOKEN_KEY, tokens.accessToken),
       setSecureItem(REFRESH_TOKEN_KEY, tokens.refreshToken),
     ]);
-
-    console.log("Tokens saved.");
   },
 
   async getAccessToken() {
@@ -113,3 +110,4 @@ export const tokenService = {
     return payload.exp <= Math.floor(Date.now() / 1000) + skewSeconds;
   },
 };
+

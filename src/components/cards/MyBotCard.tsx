@@ -1,14 +1,16 @@
-import { COLORS } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
+
 type MyBotCardProps = {
-  id: number;
+  id: string;
   icon: string;
   name: string;
   platform: string;
   status: string;
-  messages?: string;
+  messages?: number;
   onPress?: () => void;
 };
 
@@ -20,13 +22,16 @@ export default function MyBotCard({
   messages,
   onPress,
 }: MyBotCardProps) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   const isOnline = status === "Online";
 
   return (
     <Pressable style={styles.card} onPress={onPress}>
       <View style={styles.left}>
         <View style={styles.iconBox}>
-          <Ionicons name={icon as any} size={22} color="COLORS.success" />
+          <Ionicons name={icon as any} size={22} color={theme.colors.success} />
         </View>
 
         <View>
@@ -46,74 +51,109 @@ export default function MyBotCard({
         <Ionicons
           name={isOnline ? "checkmark-circle" : "close-circle"}
           size={26}
-          color={isOnline ? COLORS.primary : COLORS.danger}
+          color={isOnline ? theme.colors.primary : theme.colors.danger}
         />
       </View>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 12,
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: theme.colors.card,
 
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
+      borderRadius: 20,
 
-  left: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+      padding: 16,
 
-  iconBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
+      marginBottom: 14,
 
-    backgroundColor: "COLORS.successBg",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
 
-    justifyContent: "center",
-    alignItems: "center",
+      borderWidth: 1,
+      borderColor: theme.colors.border,
 
-    marginRight: 12,
-  },
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      shadowOffset: {
+        width: 0,
+        height: 5,
+      },
 
-  name: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
+      elevation: 4,
+    },
 
-  platform: {
-    color: COLORS.muted,
-    fontSize: 12,
-    marginTop: 3,
-  },
+    left: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
 
-  online: {
-    color: COLORS.primary,
-    fontWeight: "600",
-    marginTop: 4,
-  },
+    iconBox: {
+      width: 52,
+      height: 52,
 
-  offline: {
-    color: COLORS.danger,
-    fontWeight: "600",
-    marginTop: 4,
-  },
+      borderRadius: 16,
 
-  right: {
-    alignItems: "flex-end",
-  },
+      backgroundColor: theme.colors.successLight,
 
-  messages: {
-    color: COLORS.muted,
-    fontSize: 12,
-    marginBottom: 6,
-  },
-});
+      justifyContent: "center",
+      alignItems: "center",
+
+      marginRight: 14,
+    },
+
+    name: {
+      fontSize: 15,
+
+      fontWeight: "800",
+
+      color: theme.colors.text,
+    },
+
+    platform: {
+      marginTop: 3,
+
+      fontSize: 12,
+
+      color: theme.colors.muted,
+    },
+
+    online: {
+      marginTop: 5,
+
+      color: theme.colors.success,
+
+      fontWeight: "700",
+
+      fontSize: 12,
+    },
+
+    offline: {
+      marginTop: 5,
+
+      color: theme.colors.danger,
+
+      fontWeight: "700",
+
+      fontSize: 12,
+    },
+
+    right: {
+      alignItems: "flex-end",
+    },
+
+    messages: {
+      marginBottom: 6,
+
+      color: theme.colors.muted,
+
+      fontSize: 12,
+
+      fontWeight: "600",
+    },
+  });
+}

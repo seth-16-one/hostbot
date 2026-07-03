@@ -1,6 +1,8 @@
-import { COLORS } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+
+import { useTheme } from "@/theme";
+import type { AppTheme } from "@/theme/light";
 
 type Props = {
   name: string;
@@ -15,12 +17,15 @@ export default function ServerStatusCard({
   status,
   onPress,
 }: Props) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   const color =
     status === "online"
-      ? COLORS.primary
+      ? theme.colors.success
       : status === "warning"
-        ? COLORS.warning
-        : COLORS.danger;
+        ? theme.colors.warning
+        : theme.colors.danger;
 
   return (
     <Pressable style={styles.card} onPress={onPress}>
@@ -34,44 +39,71 @@ export default function ServerStatusCard({
         </View>
       </View>
 
-      <Ionicons name="chevron-forward" size={20} color="COLORS.tabInactive" />
+      <Ionicons
+        name="chevron-forward"
+        size={20}
+        color={theme.colors.iconLight}
+      />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    elevation: 2,
-  },
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: theme.colors.card,
 
-  left: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+      borderRadius: 20,
 
-  statusDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 14,
-  },
+      padding: 18,
 
-  name: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
+      marginBottom: 14,
 
-  uptime: {
-    marginTop: 4,
-    color: COLORS.muted,
-    fontSize: 13,
-  },
-});
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+
+      shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      shadowOffset: {
+        width: 0,
+        height: 5,
+      },
+
+      elevation: 4,
+    },
+
+    left: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+
+    statusDot: {
+      width: 12,
+      height: 12,
+
+      borderRadius: 6,
+
+      marginRight: 16,
+    },
+
+    name: {
+      fontSize: 16,
+      fontWeight: "800",
+
+      color: theme.colors.text,
+    },
+
+    uptime: {
+      marginTop: 4,
+
+      fontSize: 13,
+
+      color: theme.colors.muted,
+    },
+  });
+}
